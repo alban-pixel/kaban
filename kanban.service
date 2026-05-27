@@ -1,0 +1,20 @@
+[Unit]
+Description=STAN ROBOTIX Multi-User Collaborative Kanban Board
+After=network.target
+
+[Service]
+Type=simple
+# Path to the directory where you cloned the project
+WorkingDirectory=/Users/User/Documents/Projets/kaban
+# Run start.sh script to compile and launch the unified server
+ExecStart=/bin/bash /Users/User/Documents/Projets/kaban/start.sh
+# Restart service if it crashes
+Restart=on-failure
+RestartSec=5
+# User account that runs node (change to your pi username if deploying to Raspberry Pi, e.g. User=pi)
+User=User
+# Environment variables (optionally customize port, default is 3000)
+Environment=NODE_ENV=production PORT=3000
+
+[Install]
+WantedBy=multi-user.target
