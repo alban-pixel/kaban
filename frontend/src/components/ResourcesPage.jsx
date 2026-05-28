@@ -1,25 +1,50 @@
 import React, { useState } from 'react';
 import { 
   Calculator, Settings, ShieldAlert, Compass, ExternalLink, 
-  RefreshCw, Layers, CheckCircle2, Copy, FileText, HelpCircle, Activity
+  RefreshCw, Layers, CheckCircle2, Copy, FileText, HelpCircle, 
+  Activity, Wrench, Shield, Link, HelpCircle as HelpIcon, Play,
+  Wind, CircleDot, Database, Bookmark, AlertTriangle
 } from 'lucide-react';
 
 export default function ResourcesPage() {
-  const [activeTab, setActiveTab] = useState('calculators'); // 'calculators' | 'converters' | 'links'
-  const [activeCalculator, setActiveCalculator] = useState('gear'); // 'gear' | 'gearbox-matrix'
+  const [activeTab, setActiveTab] = useState('calculators'); // 'calculators' | 'info' | 'shortcuts'
+  const [activeCalc, setActiveCalc] = useState('gear'); // 'gear' | 'belt-chain' | 'pneumatics' | 'flywheel' | 'arm-elevator' | 'motor-playground'
 
-  // Gear Ratio State
+  // --- 1. Gear Ratio Calculator State ---
   const [gearDriver, setGearDriver] = useState(12);
   const [gearDriven, setGearDriven] = useState(36);
-  const [motorRpm, setMotorRpm] = useState(100);
-  const [motorTorque, setMotorTorque] = useState(2.5); // N.m
+  const [motorRpm, setMotorRpm] = useState(6000);
+  const [motorTorque, setMotorTorque] = useState(3.8); // N.m
 
-  // FRC Gearbox Matrix State
-  const [selectedMechanism, setSelectedMechanism] = useState('drivetrain');
-  const [selectedMotor, setSelectedMotor] = useState('kraken');
-  const currentLimit = 40; // FRC standard current limit in Amps (hardcoded 40A)
+  // --- 2. Belt & Chain Calculator State ---
+  const [pitch, setPitch] = useState(5); // mm (5mm HTD is FRC standard)
+  const [teeth1, setTeeth1] = useState(18);
+  const [teeth2, setTeeth2] = useState(30);
+  const [desiredCenter, setDesiredCenter] = useState(150); // mm
 
-  // Unit Converter State
+  // --- 3. Pneumatics Calculator State ---
+  const [boreSize, setBoreSize] = useState(1.0625); // inches (standard 1-1/16")
+  const [pressure, setPressure] = useState(60); // PSI (FRC working limit)
+  const [rodSize, setRodSize] = useState(0.3125); // inches (standard 5/16")
+
+  // --- 4. Flywheel Calculator State ---
+  const [wheelDiam, setWheelDiam] = useState(4); // inches (standard 4" wheel)
+  const [flywheelRpm, setFlywheelRpm] = useState(5000);
+  const [compressionRatio, setCompressionRatio] = useState(0.85); // 15% compression
+
+  // --- 5. Arm & Elevator Calculator State ---
+  const [mechType, setMechType] = useState('elevator'); // 'arm' | 'elevator'
+  const [weight, setWeight] = useState(15); // kg (standard robot mechanism weight)
+  const [armLength, setArmLength] = useState(0.6); // meters (or drum radius for elevator)
+  const [elevatorRadius, setElevatorRadius] = useState(25); // mm
+  const [mechReduction, setMechReduction] = useState(15); // overall gear reduction ratio
+  const [selectedMotorType, setSelectedMotorType] = useState('kraken');
+
+  // --- 6. Motor Playground State ---
+  const [playMotorA, setPlayMotorA] = useState('kraken');
+  const [playMotorB, setPlayMotorB] = useState('neo');
+
+  // Unit Converter State (Separate tab helper)
   const [inchVal, setInchVal] = useState(1);
   const [mmVal, setMmVal] = useState(25.4);
   const [ozInVal, setOzInVal] = useState(13.88);
@@ -28,133 +53,173 @@ export default function ResourcesPage() {
 
   const [copiedLink, setCopiedLink] = useState(null);
 
-  // Copy indicator helper
+  // Copy helper
   const triggerCopy = (url, name) => {
     navigator.clipboard.writeText(url);
     setCopiedLink(name);
     setTimeout(() => setCopiedLink(null), 2000);
   };
 
-  // Calculations for Gear Ratio
-  const gearRatio = gearDriven > 0 && gearDriver > 0 ? (gearDriven / gearDriver).toFixed(2) : 0;
-  const drivenRpm = gearRatio > 0 ? (motorRpm / gearRatio).toFixed(1) : 0;
-  const drivenTorque = gearRatio > 0 ? (motorTorque * gearRatio).toFixed(2) : 0;
-
-  // Motors Database FRC (With real-world linear torque constants Kt verified by CTR & REV)
+  // Motors Database FRC
   const motorsDb = {
     neo: {
       name: 'REV NEO Brushless',
       freeSpeed: 5676, // RPM
-      stallTorque: 3.36, // N.m (Theoretical stall)
+      stallTorque: 3.36, // N.m
       stallCurrent: 105, // A
-      kt: 0.075, // N.m/A (Real-world linear torque constant)
+      kt: 0.075, // N.m/A
       peakPower: 406, // W
-      notes: 'Moteur polyvalent FRC par excellence. Fiable, bon rapport couple/vitesse.',
+      notes: 'Moteur polyvalent standard économique REV.',
       color: '#ffa500'
     },
     neo550: {
       name: 'REV NEO 550',
       freeSpeed: 11000, // RPM
-      stallTorque: 0.97, // N.m (Theoretical stall)
+      stallTorque: 0.97, // N.m
       stallCurrent: 100, // A
-      kt: 0.022, // N.m/A (Real-world linear torque constant)
+      kt: 0.022, // N.m/A
       peakPower: 278, // W
-      notes: 'Ultra compact et léger. Vitesse très élevée mais chauffe rapidement sous forte charge. Perte de couple rapide à basse vitesse.',
+      notes: 'Compact, idéal pour admissions (intakes) et petits sous-systèmes.',
       color: '#38bdf8'
     },
     kraken: {
       name: 'WCP Kraken X60',
       freeSpeed: 6000, // RPM
-      stallTorque: 9.37, // N.m (Peak stall under FOC)
-      stallCurrent: 366, // A (Maximum phase current)
-      kt: 0.095, // N.m/A (Real-world linear torque constant, yielding ~3.8 Nm at 40A)
+      stallTorque: 9.37, // N.m
+      stallCurrent: 366, // A
+      kt: 0.095, // N.m/A (3.8 Nm real @ 40A FRC breaker limit)
       peakPower: 1102, // W
-      notes: 'Le monstre de puissance FRC actuel. Refroidissement intégré, couple massif, rendement exceptionnel.',
+      notes: 'Le standard absolu de puissance FRC. Rendement exceptionnel.',
       color: '#cf2737'
+    },
+    falcon: {
+      name: 'VEX Falcon 500',
+      freeSpeed: 6380, // RPM
+      stallTorque: 4.69, // N.m
+      stallCurrent: 257, // A
+      kt: 0.082, // N.m/A (3.2 Nm @ 40A limit)
+      peakPower: 783, // W
+      notes: 'Prédécesseur du Kraken, moteur brushless historique FRC.',
+      color: '#06b6d4'
     }
   };
 
-  // FRC Mechanisms Database
-  const mechanismsDb = {
-    drivetrain: {
-      name: 'Châssis / Base Pilotable (Drivetrain)',
-      minRatio: 4.5,
-      maxRatio: 8.5,
-      recommendedMotor: 'kraken',
-      suitability: {
-        kraken: 'Recommandé (Performance maximale, forte accélération)',
-        neo: 'Adapté (Choix standard et économique)',
-        neo550: 'CRITIQUE (Absolument proscrit: surchauffe et casse immédiate)'
-      },
-      notes: 'Exige une forte accélération et une résistance aux impacts. Les modules Swerve (ex: MAXSwerve, SDS MK4i) utilisent des réductions typiques de 5.5:1 à 6.75:1.'
-    },
-    arm: {
-      name: 'Bras Articulé / Pivot (Heavy Arm / Joint)',
-      minRatio: 50.0,
-      maxRatio: 150.0,
-      recommendedMotor: 'kraken',
-      suitability: {
-        kraken: 'Idéal (Couple de maintien élevé, puissance sous contrôle)',
-        neo: 'Recommandé (Très bon comportement avec un MAXPlanetary)',
-        neo550: 'Déconseillé (Sauf très petits mécanismes légers)'
-      },
-      notes: 'Réduction massive obligatoire pour contrer la gravité et éviter le "backdrive". Ajoutez un ressort à gaz d\'équilibrage et utilisez des freins moteurs intégrés (Brake mode).'
-    },
-    elevator: {
-      name: 'Élévateur (Elevator / Lift)',
-      minRatio: 8.0,
-      maxRatio: 25.0,
-      recommendedMotor: 'neo',
-      suitability: {
-        kraken: 'Excellent (Vitesse ascensionnelle fulgurante)',
-        neo: 'Recommandé (Excellent contrôle de position avec encodeur)',
-        neo550: 'Risqué (Seulement sur mini-chariots ou indexeurs verticaux)'
-      },
-      notes: 'Attention au couple requis lors de la montée à pleine charge. L\'utilisation d\'un cliquet anti-retour ou d\'un frein pneumatique prévient la chute libre hors tension.'
-    },
-    shooter: {
-      name: 'Lanceur / Volant d\'inertie (Shooter)',
-      minRatio: 1.0,
-      maxRatio: 2.0,
-      recommendedMotor: 'kraken',
-      suitability: {
-        kraken: 'Idéal (Récupération de RPM ultra-rapide entre les tirs)',
-        neo: 'Très bon (Performances classiques éprouvées)',
-        neo550: 'Non adapté (Inertie thermique insuffisante)'
-      },
-      notes: 'Généralement configuré en prise directe (1:1) ou légère multiplication/réduction 1.5:1. Utilisez un volant d\'inertie lourd pour stabiliser la vitesse lors du passage des notes/balles.'
-    },
-    intake: {
-      name: 'Admission / Rouleaux (Intake / Roller)',
-      minRatio: 3.0,
-      maxRatio: 10.0,
-      recommendedMotor: 'neo550',
-      suitability: {
-        kraken: 'Surdimensionné (Trop lourd et puissant pour ce besoin)',
-        neo: 'Excellent (Robuste et fiable)',
-        neo550: 'Idéal (Léger, compact, haut régime parfait pour attraper les objets)'
-      },
-      notes: 'Transmettez le mouvement par courroies crantées (HTD 5mm) ou roues en polyuréthane. Permet au moteur de sauter des crans ou glisser en cas de blocage sans casser.'
-    }
+  // --- CALCULATION FORMULAS ---
+
+  // 1. Gear Ratio outputs
+  const gearRatio = gearDriven > 0 && gearDriver > 0 ? (gearDriven / gearDriver).toFixed(2) : 0;
+  const drivenRpm = gearRatio > 0 ? (motorRpm / gearRatio).toFixed(0) : 0;
+  const drivenTorque = gearRatio > 0 ? (motorTorque * gearRatio).toFixed(1) : 0;
+
+  // 2. Belt & Chain outputs
+  const calcBeltTeeth = () => {
+    // Standard FRC belt length formula
+    const C = desiredCenter;
+    const D = (pitch * teeth2) / Math.PI;
+    const d = (pitch * teeth1) / Math.PI;
+    const term1 = 2 * C;
+    const term2 = (Math.PI / 2) * (D + d);
+    const term3 = Math.pow(D - d, 2) / (4 * C);
+    const totalLengthMm = term1 + term2 + term3;
+    const calculatedTeeth = totalLengthMm / pitch;
+    return {
+      length: totalLengthMm.toFixed(1),
+      teeth: Math.round(calculatedTeeth)
+    };
   };
+  const beltResults = calcBeltTeeth();
 
-  // Active matrix selection data
-  const currentMotor = motorsDb[selectedMotor];
-  const currentMechanism = mechanismsDb[selectedMechanism];
+  // Exact center distance based on actual rounded belt teeth
+  const getExactCenter = (actualTeeth) => {
+    const L = actualTeeth * pitch;
+    const D = (pitch * teeth2) / Math.PI;
+    const d = (pitch * teeth1) / Math.PI;
+    const b = 2 * L - Math.PI * (D + d);
+    const rad = Math.pow(b, 2) - 8 * Math.pow(D - d, 2);
+    if (rad < 0) return 0;
+    const C = (b + Math.sqrt(rad)) / 8;
+    return C.toFixed(2);
+  };
+  const exactCenter = getExactCenter(beltResults.teeth);
 
-  // FRC Breaker & Software current limit physics
-  // Use real linear Torque Constant (Kt) from motors database
-  const kt = currentMotor.kt;
-  const limitedMotorStallTorque = Math.min(currentMotor.stallTorque, kt * currentLimit);
+  // 3. Pneumatics outputs
+  const calcPneumaticsForce = () => {
+    const psiVal = parseFloat(pressure) || 0;
+    const areaExt = Math.PI * Math.pow(parseFloat(boreSize) / 2, 2);
+    const areaRet = areaExt - (Math.PI * Math.pow(parseFloat(rodSize) / 2, 2));
+    
+    // Force in lbs, then converted to kg-force (1 lb = 0.453592 kg)
+    const forceExtLbs = areaExt * psiVal;
+    const forceRetLbs = areaRet * psiVal;
+    return {
+      extLbs: forceExtLbs.toFixed(1),
+      retLbs: forceRetLbs.toFixed(1),
+      extKg: (forceExtLbs * 0.453592).toFixed(1),
+      retKg: (forceRetLbs * 0.453592).toFixed(1)
+    };
+  };
+  const pneuForce = calcPneumaticsForce();
 
-  // Live estimated speed & torque output for selected combo
-  const avgReduction = ((currentMechanism.minRatio + currentMechanism.maxRatio) / 2);
-  const estOutputRpm = (currentMotor.freeSpeed / avgReduction).toFixed(0);
-  const estStallTorqueTheoretical = (currentMotor.stallTorque * avgReduction).toFixed(1);
-  const estStallTorqueLimited = (limitedMotorStallTorque * avgReduction).toFixed(1);
+  // 4. Flywheel outputs
+  const calcFlywheelSurfaceSpeed = () => {
+    // speed = RPM * diameter * pi / (12 * 60) in ft/s
+    const rpm = parseFloat(flywheelRpm) || 0;
+    const diam = parseFloat(wheelDiam) || 0;
+    const surfSpeedFps = (rpm * diam * Math.PI) / 720;
+    const ballExitSpeedFps = surfSpeedFps * parseFloat(compressionRatio); // approximate exit velocity under compression
+    return {
+      surfFps: surfSpeedFps.toFixed(1),
+      surfMps: (surfSpeedFps * 0.3048).toFixed(1),
+      ballFps: ballExitSpeedFps.toFixed(1),
+      ballMps: (ballExitSpeedFps * 0.3048).toFixed(1)
+    };
+  };
+  const flywheelSpeed = calcFlywheelSurfaceSpeed();
 
-  // Clearance guide search state
-  const [clearanceSearch, setClearanceSearch] = useState('');
+  // 5. Arm & Elevator outputs
+  const calcArmElevatorLift = () => {
+    const motor = motorsDb[selectedMotorType];
+    const red = parseFloat(mechReduction) || 1;
+    // Current limit is 40A standard FRC
+    const activeMotorStallTorque = Math.min(motor.stallTorque, motor.kt * 40);
+    const stallTorqueOutput = activeMotorStallTorque * red; // N.m
+
+    let maxWeightKg = 0;
+    let loadSpeedMps = 0;
+    let timeSeconds = 0;
+
+    if (mechType === 'elevator') {
+      const r = (parseFloat(elevatorRadius) || 20) / 1000; // mm to meters
+      // force = torque / r
+      const maxForceN = stallTorqueOutput / r;
+      maxWeightKg = maxForceN / 9.81;
+
+      // Speed at 50% max speed (typical FRC loaded target)
+      const drumSpeedRps = (motor.freeSpeed / 2) / red / 60;
+      loadSpeedMps = drumSpeedRps * (2 * Math.PI * r);
+      timeSeconds = 1.0 / loadSpeedMps; // Travel time per 1 meter
+    } else {
+      const len = parseFloat(armLength) || 0.5; // meters
+      // torque = F * len -> F = torque / len
+      const maxForceN = stallTorqueOutput / len;
+      maxWeightKg = maxForceN / 9.81;
+
+      // Loaded rotational speed (deg/s)
+      const armRps = (motor.freeSpeed / 2) / red / 60;
+      const degPerSec = armRps * 360;
+      loadSpeedMps = degPerSec; // represent deg/s in output field
+      timeSeconds = 90 / degPerSec; // time for 90 degree sweep
+    }
+
+    return {
+      maxWeight: maxWeightKg.toFixed(1),
+      loadedSpeed: loadSpeedMps.toFixed(1),
+      time: timeSeconds.toFixed(2),
+      outputTorque: stallTorqueOutput.toFixed(1)
+    };
+  };
+  const lifterStats = calcArmElevatorLift();
+
   const clearanceData = [
     { size: 'M2', pitch: '0.40 mm', drillTight: '2.05 mm', drillFree: '2.20 mm', tapDrill: '1.60 mm' },
     { size: 'M2.5', pitch: '0.45 mm', drillTight: '2.55 mm', drillFree: '2.70 mm', tapDrill: '2.05 mm' },
@@ -165,51 +230,20 @@ export default function ResourcesPage() {
     { size: 'M8', pitch: '1.25 mm', drillTight: '8.20 mm', drillFree: '9.00 mm', tapDrill: '6.80 mm' },
   ];
 
-  const filteredClearance = clearanceData.filter(d => 
-    d.size.toLowerCase().includes(clearanceSearch.toLowerCase())
-  );
-
-  const linksData = [
-    { 
-      category: 'Documentation & Règles FRC', 
-      items: [
-        { name: 'FRC WPILib Docs', url: 'https://docs.wpilib.org/en/stable/', desc: 'La bible absolue de programmation pour robots de compétition FRC (C++, Java, Python).' },
-        { name: 'Rules FTC (First Tech Challenge)', url: 'https://www.firstinspires.org/resource-library/ftc/game-manuals', desc: 'Règlements officiels, spécifications des moteurs et guides d\'inspection de conformité technique.' },
-        { name: 'GitHub STAN ROBOTIX', url: 'https://github.com/alban-pixel', desc: 'Dépôts collaboratifs de notre club pour les designs de cartes et softwares embarqués.' }
-      ]
-    },
-    { 
-      category: 'Modélisation CAD & Pièces', 
-      items: [
-        { name: 'GrabCAD Community', url: 'https://grabcad.com/library', desc: 'Base de données géante de pièces en 3D CAD gratuites et assemblages mécatroniques.' },
-        { name: 'McMaster-Carr Catalog', url: 'https://www.mcmaster.com/', desc: 'Trouvez tous les modèles CAO 3D précis d\'engrenages, roulements, vis et connecteurs pour l\'intégration.' },
-        { name: 'Onshape Education', url: 'https://www.onshape.com/fr/', desc: 'Plateforme CAD cloud de modélisation collaborative en temps réel.' }
-      ]
-    },
-    { 
-      category: 'Électronique & Embarqué', 
-      items: [
-        { name: 'Raspberry Pi Standard Pinout', url: 'https://pinout.xyz/', desc: 'Plan détaillé interactif des GPIOs, bus I2C, SPI et UART de toutes les versions de RasPi.' },
-        { name: 'Arduino Language Reference', url: 'https://www.arduino.cc/reference/en/', desc: 'Documentation officielle pour le codage rapide de microcontrôleurs embarqués et de drivers de moteurs.' },
-        { name: 'Pololu Robotics Power Specs', url: 'https://www.pololu.com/', desc: 'Fiches et calculateurs de couples pour motoréducteurs de précision.' }
-      ]
-    }
-  ];
-
   return (
     <div style={styles.container}>
-      {/* Header */}
+      {/* Header Banner */}
       <div style={styles.header}>
         <div style={styles.headerTitleGroup}>
-          <Calculator size={24} style={{ color: 'var(--brand-red)' }} />
-          <h2 style={styles.headerTitle}>Ressources Utiles & Calculateurs</h2>
+          <Calculator size={26} style={{ color: 'var(--brand-red)' }} />
+          <h2 style={styles.headerTitle}>STAN ReCalc & FRC Resources</h2>
         </div>
         <p style={styles.headerSubtitle}>
-          Boîte à outils de conception et de calcul robotique pour le club <strong>STAN ROBOTIX</strong>.
+          Centre mécatronique et calculateurs de référence FRC pour le club **STAN ROBOTIX**.
         </p>
       </div>
 
-      {/* Tabs */}
+      {/* Primary Category Selector Tabs */}
       <div style={styles.tabContainer}>
         <button 
           onClick={() => setActiveTab('calculators')}
@@ -220,286 +254,355 @@ export default function ResourcesPage() {
             fontWeight: activeTab === 'calculators' ? '600' : '500'
           }}
         >
-          <Settings size={16} /> Calculateurs & Réductions FRC
+          <Settings size={16} /> FRC Calculators Hub
         </button>
         <button 
-          onClick={() => setActiveTab('converters')}
+          onClick={() => setActiveTab('info')}
           style={{
             ...styles.tabBtn,
-            borderBottom: activeTab === 'converters' ? '3px solid var(--brand-red)' : '3px solid transparent',
-            color: activeTab === 'converters' ? 'var(--text-main)' : 'var(--text-muted)',
-            fontWeight: activeTab === 'converters' ? '600' : '500'
+            borderBottom: activeTab === 'info' ? '3px solid var(--brand-red)' : '3px solid transparent',
+            color: activeTab === 'info' ? 'var(--text-main)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'info' ? '600' : '500'
           }}
         >
-          <RefreshCw size={16} /> Convertisseurs & Tolérances
+          <Database size={16} /> Information & Playgrounds
         </button>
         <button 
-          onClick={() => setActiveTab('links')}
+          onClick={() => setActiveTab('shortcuts')}
           style={{
             ...styles.tabBtn,
-            borderBottom: activeTab === 'links' ? '3px solid var(--brand-red)' : '3px solid transparent',
-            color: activeTab === 'links' ? 'var(--text-main)' : 'var(--text-muted)',
-            fontWeight: activeTab === 'links' ? '600' : '500'
+            borderBottom: activeTab === 'shortcuts' ? '3px solid var(--brand-red)' : '3px solid transparent',
+            color: activeTab === 'shortcuts' ? 'var(--text-main)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'shortcuts' ? '600' : '500'
           }}
         >
-          <Compass size={16} /> Liens & Documentation
+          <Bookmark size={16} /> Shortcuts & 2026 Manuals
         </button>
       </div>
 
-      {/* Main Workspace */}
+      {/* Main Workspace Frame */}
       <div style={styles.contentBody}>
-        
-        {/* TAB 1: CALCULATORS */}
+
+        {/* TAB 1: ALL FRC CALCULATORS */}
         {activeTab === 'calculators' && (
           <div style={styles.calcLayout}>
-            {/* Left Nav for Calculators */}
+            {/* Sidebar with all FRC Calculators */}
             <div style={styles.calcSidebar}>
               <button 
-                onClick={() => setActiveCalculator('gear')}
+                onClick={() => setActiveCalc('gear')}
                 style={{
                   ...styles.calcSidebarBtn,
-                  backgroundColor: activeCalculator === 'gear' ? 'var(--brand-red-alpha-10)' : 'transparent',
-                  color: activeCalculator === 'gear' ? 'var(--brand-red)' : 'var(--text-main)',
-                  fontWeight: activeCalculator === 'gear' ? '600' : '500',
-                  borderLeft: activeCalculator === 'gear' ? '3px solid var(--brand-red)' : '3px solid transparent'
+                  backgroundColor: activeCalc === 'gear' ? 'var(--brand-red-alpha-10)' : 'transparent',
+                  color: activeCalc === 'gear' ? 'var(--brand-red)' : 'var(--text-main)',
+                  borderLeft: activeCalc === 'gear' ? '3px solid var(--brand-red)' : '3px solid transparent',
+                  fontWeight: activeCalc === 'gear' ? '600' : '500'
                 }}
               >
-                <Layers size={16} /> Rapport d'Engrenages Simple
+                <Layers size={14} /> Gear Ratio & Reductions
               </button>
               <button 
-                onClick={() => setActiveCalculator('gearbox-matrix')}
+                onClick={() => setActiveCalc('belt-chain')}
                 style={{
                   ...styles.calcSidebarBtn,
-                  backgroundColor: activeCalculator === 'gearbox-matrix' ? 'var(--brand-red-alpha-10)' : 'transparent',
-                  color: activeCalculator === 'gearbox-matrix' ? 'var(--brand-red)' : 'var(--text-main)',
-                  fontWeight: activeCalculator === 'gearbox-matrix' ? '600' : '500',
-                  borderLeft: activeCalculator === 'gearbox-matrix' ? '3px solid var(--brand-red)' : '3px solid transparent'
+                  backgroundColor: activeCalc === 'belt-chain' ? 'var(--brand-red-alpha-10)' : 'transparent',
+                  color: activeCalc === 'belt-chain' ? 'var(--brand-red)' : 'var(--text-main)',
+                  borderLeft: activeCalc === 'belt-chain' ? '3px solid var(--brand-red)' : '3px solid transparent',
+                  fontWeight: activeCalc === 'belt-chain' ? '600' : '500'
                 }}
               >
-                <Activity size={16} /> Matrice Réductions & Moteurs FRC
+                <Wrench size={14} /> Belt & Chain Calculator
+              </button>
+              <button 
+                onClick={() => setActiveCalc('pneumatics')}
+                style={{
+                  ...styles.calcSidebarBtn,
+                  backgroundColor: activeCalc === 'pneumatics' ? 'var(--brand-red-alpha-10)' : 'transparent',
+                  color: activeCalc === 'pneumatics' ? 'var(--brand-red)' : 'var(--text-main)',
+                  borderLeft: activeCalc === 'pneumatics' ? '3px solid var(--brand-red)' : '3px solid transparent',
+                  fontWeight: activeCalc === 'pneumatics' ? '600' : '500'
+                }}
+              >
+                <Wind size={14} /> Pneumatics Force
+              </button>
+              <button 
+                onClick={() => setActiveCalc('flywheel')}
+                style={{
+                  ...styles.calcSidebarBtn,
+                  backgroundColor: activeCalc === 'flywheel' ? 'var(--brand-red-alpha-10)' : 'transparent',
+                  color: activeCalc === 'flywheel' ? 'var(--brand-red)' : 'var(--text-main)',
+                  borderLeft: activeCalc === 'flywheel' ? '3px solid var(--brand-red)' : '3px solid transparent',
+                  fontWeight: activeCalc === 'flywheel' ? '600' : '500'
+                }}
+              >
+                <CircleDot size={14} /> Flywheel / Shooter
+              </button>
+              <button 
+                onClick={() => setActiveCalc('arm-elevator')}
+                style={{
+                  ...styles.calcSidebarBtn,
+                  backgroundColor: activeCalc === 'arm-elevator' ? 'var(--brand-red-alpha-10)' : 'transparent',
+                  color: activeCalc === 'arm-elevator' ? 'var(--brand-red)' : 'var(--text-main)',
+                  borderLeft: activeCalc === 'arm-elevator' ? '3px solid var(--brand-red)' : '3px solid transparent',
+                  fontWeight: activeCalc === 'arm-elevator' ? '600' : '500'
+                }}
+              >
+                <Activity size={14} /> Arm & Elevator Loads
               </button>
             </div>
 
-            {/* Calculator Card Workspace */}
-            <div className="glass-panel" style={styles.calcWorkspaceCard}>
-              
-              {/* 1.1 Gear Ratio Calculator */}
-              {activeCalculator === 'gear' && (
+            {/* Inner Dashboard Canvas */}
+            <div className="glass-panel animate-fade" style={styles.calcWorkspaceCard}>
+
+              {/* 1. GEAR RATIO CALCULATOR */}
+              {activeCalc === 'gear' && (
                 <div style={styles.calcFlex}>
                   <div style={styles.calcInputs}>
-                    <h3 style={styles.calcTitle}>Calculateur de Rapport d'Engrenages</h3>
-                    <p style={styles.calcDesc}>Calculez le ratio, le couple démultiplié et la vitesse de sortie d'un train d'engrenage simple.</p>
-                    
+                    <h3 style={styles.calcTitle}>Ratio & Reductions Simple</h3>
+                    <p style={styles.calcDesc}>Estimez la vitesse et le couple en sortie d'un train d'engrenage simple pour vos configurations mécatroniques.</p>
                     <div style={styles.inputGrid}>
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Dents Pignon Moteur (N1 - Menant)</label>
-                        <input 
-                          type="number" 
-                          value={gearDriver} 
-                          onChange={(e) => setGearDriver(Math.max(1, parseInt(e.target.value) || 1))}
-                          style={styles.input} 
-                        />
+                        <label style={styles.label}>Pignon Menant (N1)</label>
+                        <input type="number" value={gearDriver} onChange={(e) => setGearDriver(Math.max(1, parseInt(e.target.value) || 1))} style={styles.input} />
                       </div>
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Dents Roue de Sortie (N2 - Mené)</label>
-                        <input 
-                          type="number" 
-                          value={gearDriven} 
-                          onChange={(e) => setGearDriven(Math.max(1, parseInt(e.target.value) || 1))}
-                          style={styles.input} 
-                        />
+                        <label style={styles.label}>Pignon Mené (N2)</label>
+                        <input type="number" value={gearDriven} onChange={(e) => setGearDriven(Math.max(1, parseInt(e.target.value) || 1))} style={styles.input} />
                       </div>
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Vitesse du Moteur (RPM)</label>
-                        <input 
-                          type="number" 
-                          value={motorRpm} 
-                          onChange={(e) => setMotorRpm(Math.max(0, parseFloat(e.target.value) || 0))}
-                          style={styles.input} 
-                        />
+                        <label style={styles.label}>Régime Moteur (RPM)</label>
+                        <input type="number" value={motorRpm} onChange={(e) => setMotorRpm(Math.max(0, parseInt(e.target.value) || 0))} style={styles.input} />
                       </div>
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Couple du Moteur (N.m)</label>
-                        <input 
-                          type="number" 
-                          step="0.1"
-                          value={motorTorque} 
-                          onChange={(e) => setMotorTorque(Math.max(0, parseFloat(e.target.value) || 0))}
-                          style={styles.input} 
-                        />
+                        <label style={styles.label}>Couple Moteur (N.m)</label>
+                        <input type="number" step="0.1" value={motorTorque} onChange={(e) => setMotorTorque(Math.max(0, parseFloat(e.target.value) || 0))} style={styles.input} />
                       </div>
                     </div>
                   </div>
 
                   <div style={styles.calcResults}>
-                    <h4 style={styles.resultsHeading}>Résultats Estimés</h4>
-                    
+                    <h4 style={styles.resultsHeading}>Résultats Démultiplication</h4>
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Rapport d'engrenage global :</span>
+                      <span style={styles.resultLabel}>Rapport final :</span>
                       <span style={styles.resultValue}>{gearRatio} : 1</span>
                     </div>
-
-                    <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Réduction mécanique :</span>
-                      <span style={{
-                        ...styles.resultValueBadge,
-                        backgroundColor: parseFloat(gearRatio) >= 1 ? 'rgba(16, 185, 129, 0.1)' : 'rgba(239, 68, 68, 0.1)',
-                        color: parseFloat(gearRatio) >= 1 ? '#10b981' : '#ef4444'
-                      }}>
-                        {parseFloat(gearRatio) >= 1 ? 'Démultiplication (Force)' : 'Multiplication (Vitesse)'}
-                      </span>
-                    </div>
-
                     <div style={styles.resultDivider}></div>
-
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Vitesse de sortie finale :</span>
+                      <span style={styles.resultLabel}>Vitesse finale :</span>
                       <span style={styles.resultValueHighlight}>{drivenRpm} RPM</span>
                     </div>
-
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Couple de sortie final :</span>
-                      <span style={styles.resultValueHighlight}>{drivenTorque} N.m</span>
+                      <span style={styles.resultLabel}>Couple final théorique :</span>
+                      <span style={{...styles.resultValueHighlight, color: '#10b981'}}>{drivenTorque} N.m</span>
                     </div>
                   </div>
                 </div>
               )}
 
-              {/* 1.2 FRC Gearbox Matrix Chart */}
-              {activeCalculator === 'gearbox-matrix' && (
+              {/* 2. BELT & CHAIN CALCULATOR */}
+              {activeCalc === 'belt-chain' && (
                 <div style={styles.calcFlex}>
                   <div style={styles.calcInputs}>
-                    <h3 style={styles.calcTitle}>Matrice de Sélection Réducteurs & Moteurs FRC</h3>
-                    <p style={styles.calcDesc}>
-                      Sélectionnez un mécanisme de robot FRC et un moteur brushless de référence pour visualiser les réductions conseillées et les performances théoriques estimées.
-                    </p>
-                    
-                    {/* Setup selectors */}
+                    <h3 style={styles.calcTitle}>Belt & Chain Center Distance Calculator</h3>
+                    <p style={styles.calcDesc}>Trouvez le nombre exact de dents de courroie ou maillons requis en fonction du pas (pitch standard HTD 5mm) et de l'entraxe visé.</p>
                     <div style={styles.inputGrid}>
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>1. Choisir le Mécanisme FRC</label>
-                        <select 
-                          value={selectedMechanism}
-                          onChange={(e) => setSelectedMechanism(e.target.value)}
-                          style={styles.select}
-                        >
-                          <option value="drivetrain">Base Pilotable / Drivetrain</option>
-                          <option value="arm">Bras Articulé / Pivot Lourd</option>
-                          <option value="elevator">Élévateur / Lift</option>
-                          <option value="shooter">Lanceur (Shooter)</option>
-                          <option value="intake">Admission / Intake (Rouleaux)</option>
+                        <label style={styles.label}>Pas / Pitch (mm)</label>
+                        <select value={pitch} onChange={(e) => setPitch(parseFloat(e.target.value))} style={styles.select}>
+                          <option value="5">5 mm (FRC HTD standard)</option>
+                          <option value="3">3 mm (REV GT2 léger)</option>
+                          <option value="6.35">6.35 mm (Chaîne FRC #25)</option>
+                          <option value="9.525">9.525 mm (Chaîne #35)</option>
                         </select>
                       </div>
-
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>2. Choisir le Moteur FRC</label>
-                        <div style={styles.motorRadioGroup}>
-                          <button 
-                            type="button"
-                            onClick={() => setSelectedMotor('kraken')}
-                            style={{
-                              ...styles.motorBadgeBtn,
-                              backgroundColor: selectedMotor === 'kraken' ? 'var(--brand-red-alpha-20)' : 'transparent',
-                              border: selectedMotor === 'kraken' ? '1px solid var(--brand-red)' : '1px solid var(--border-color)',
-                              color: selectedMotor === 'kraken' ? 'var(--brand-red)' : 'var(--text-main)'
-                            }}
-                          >
-                            Kraken X60
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => setSelectedMotor('neo')}
-                            style={{
-                              ...styles.motorBadgeBtn,
-                              backgroundColor: selectedMotor === 'neo' ? 'rgba(255, 165, 0, 0.15)' : 'transparent',
-                              border: selectedMotor === 'neo' ? '1px solid #ffa500' : '1px solid var(--border-color)',
-                              color: selectedMotor === 'neo' ? '#ffa500' : 'var(--text-main)'
-                            }}
-                          >
-                            NEO
-                          </button>
-                          <button 
-                            type="button"
-                            onClick={() => setSelectedMotor('neo550')}
-                            style={{
-                              ...styles.motorBadgeBtn,
-                              backgroundColor: selectedMotor === 'neo550' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
-                              border: selectedMotor === 'neo550' ? '1px solid #38bdf8' : '1px solid var(--border-color)',
-                              color: selectedMotor === 'neo550' ? '#38bdf8' : 'var(--text-main)'
-                            }}
-                          >
-                            NEO 550
-                          </button>
-                        </div>
+                        <label style={styles.label}>Dents Poulie 1</label>
+                        <input type="number" value={teeth1} onChange={(e) => setTeeth1(Math.max(1, parseInt(e.target.value) || 1))} style={styles.input} />
                       </div>
-                    </div>
-
-
-
-                    {/* Compatibility Alert & Guidance */}
-                    <div style={styles.suitabilityPanel}>
-                      <span style={styles.suitabilityHeading}>Compatibilité Mécanique :</span>
-                      <div style={{
-                        ...styles.suitabilityStatus,
-                        color: currentMechanism.suitability[selectedMotor].includes('CRITIQUE') || currentMechanism.suitability[selectedMotor].includes('proscrit') ? '#ef4444' :
-                               currentMechanism.suitability[selectedMotor].includes('Recommandé') || currentMechanism.suitability[selectedMotor].includes('Idéal') || currentMechanism.suitability[selectedMotor].includes('Excellent') ? '#10b981' : '#f59e0b'
-                      }}>
-                        <ShieldAlert size={16} /> {currentMechanism.suitability[selectedMotor]}
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Dents Poulie 2</label>
+                        <input type="number" value={teeth2} onChange={(e) => setTeeth2(Math.max(1, parseInt(e.target.value) || 1))} style={styles.input} />
                       </div>
-                      <p style={styles.suitabilityDesc}>{currentMechanism.notes}</p>
-                    </div>
-
-                    {/* FRC Advice panel */}
-                    <div style={styles.advicePanel}>
-                      <h5 style={styles.adviceTitle}>Physique du Moteur sous Limite d'Intensité :</h5>
-                      <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
-                        Constante de couple ($K_t$) de ce moteur : <strong>{kt.toFixed(4)} N.m/A</strong>.<br />
-                        À <strong>{currentLimit} A</strong>, le couple de calage maximal au niveau de l'arbre moteur est bridé à 
-                        <strong style={{ color: 'var(--brand-red)' }}> {limitedMotorStallTorque.toFixed(2)} N.m </strong> 
-                        (au lieu de {currentMotor.stallTorque} N.m en calage théorique libre sous {currentMotor.stallCurrent}A).
-                      </p>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Entraxe Visé / Desired Center (mm)</label>
+                        <input type="number" value={desiredCenter} onChange={(e) => setDesiredCenter(Math.max(10, parseFloat(e.target.value) || 10))} style={styles.input} />
+                      </div>
                     </div>
                   </div>
 
-                  {/* Estimated output parameters on this mechanism */}
                   <div style={styles.calcResults}>
-                    <h4 style={styles.resultsHeading}>Spécifications Réelles ({currentLimit}A)</h4>
-                    
+                    <h4 style={styles.resultsHeading}>Spécifications Courroie/Chaîne</h4>
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Moteur sélectionné :</span>
-                      <span style={{ ...styles.resultValue, color: currentMotor.color }}>{currentMotor.name}</span>
+                      <span style={styles.resultLabel}>Longueur totale estimée :</span>
+                      <span style={styles.resultValue}>{beltResults.length} mm</span>
                     </div>
-
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Vitesse à vide (Free Speed) :</span>
-                      <span style={styles.resultValue}>{currentMotor.freeSpeed} RPM</span>
+                      <span style={styles.resultLabel}>Maillons / Dents arrondis :</span>
+                      <span style={{...styles.resultValueHighlight, color: 'var(--brand-red)'}}>{beltResults.teeth} dents</span>
                     </div>
-
-                    <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Couple Stall Max Théorique :</span>
-                      <span style={{ ...styles.resultValue, textDecoration: 'line-through', opacity: 0.6 }}>{currentMotor.stallTorque} N.m</span>
-                    </div>
-
-                    <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Couple Stall Réel Bridé ({currentLimit}A) :</span>
-                      <span style={{ ...styles.resultValue, color: 'var(--brand-red)', fontWeight: '700' }}>{limitedMotorStallTorque.toFixed(2)} N.m</span>
-                    </div>
-
                     <div style={styles.resultDivider}></div>
-
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Vitesse de sortie ({avgReduction.toFixed(1)}:1) :</span>
-                      <span style={styles.resultValueHighlight}>{estOutputRpm} RPM</span>
+                      <span style={styles.resultLabel}>Entraxe exact calculé :</span>
+                      <span style={{...styles.resultValueHighlight, color: '#10b981'}}>{exactCenter} mm</span>
                     </div>
+                    <span style={styles.currentLimitHelpText}>
+                      * Note : Prévoyez toujours une tolérance d'installation de +0.05 mm à +0.1 mm en fabrication CNC/Laser pour garantir la tension parfaite de la courroie sans ajouter de tendeur.
+                    </span>
+                  </div>
+                </div>
+              )}
 
-                    <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Couple de calage réels à l'arbre :</span>
-                      <span style={{ ...styles.resultValueHighlight, color: '#10b981' }}>{estStallTorqueLimited} N.m</span>
+              {/* 3. PNEUMATICS FORCE CALCULATOR */}
+              {activeCalc === 'pneumatics' && (
+                <div style={styles.calcFlex}>
+                  <div style={styles.calcInputs}>
+                    <h3 style={styles.calcTitle}>Calculateur de Force Vérin Pneumatique</h3>
+                    <p style={styles.calcDesc}>Estimez la force mécanique exercée par vos pistons pneumatiques en extension et en rétraction (en tenant compte du diamètre de la tige).</p>
+                    <div style={styles.inputGrid}>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Bore / Diamètre Piston (pouces)</label>
+                        <select value={boreSize} onChange={(e) => setBoreSize(parseFloat(e.target.value))} style={styles.select}>
+                          <option value="0.75">0.75" (3/4 pouce)</option>
+                          <option value="1.0625">1.0625" (1-1/16 pouce - FRC standard)</option>
+                          <option value="1.5">1.5" (1-1/2 pouce)</option>
+                          <option value="2.0">2.0" (2 pouces)</option>
+                        </select>
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Tige / Rod Diameter (pouces)</label>
+                        <select value={rodSize} onChange={(e) => setRodSize(parseFloat(e.target.value))} style={styles.select}>
+                          <option value="0.25">0.25" (1/4 pouce)</option>
+                          <option value="0.3125">0.3125" (5/16 pouce)</option>
+                          <option value="0.5">0.5" (1/2 pouce)</option>
+                        </select>
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Pression de Travail (PSI)</label>
+                        <input type="number" value={pressure} onChange={(e) => setPressure(Math.max(0, parseInt(e.target.value) || 0))} style={styles.input} />
+                      </div>
                     </div>
+                  </div>
 
+                  <div style={styles.calcResults}>
+                    <h4 style={styles.resultsHeading}>Force de Poussée</h4>
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Couple de calage théorique libre :</span>
-                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{estStallTorqueTheoretical} N.m</span>
+                      <span style={styles.resultLabel}>Extension (Pousser) :</span>
+                      <span style={styles.resultValueHighlight}>{pneuForce.extKg} kg ({pneuForce.extLbs} lbs)</span>
+                    </div>
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>Rétraction (Tirer) :</span>
+                      <span style={{...styles.resultValueHighlight, color: 'var(--brand-red)'}}>{pneuForce.retKg} kg ({pneuForce.retLbs} lbs)</span>
+                    </div>
+                    <div style={styles.resultDivider}></div>
+                    <span style={styles.currentLimitHelpText}>
+                      * La pression maximale de travail en FRC est limitée par le règlement officiel à 60 PSI (4.13 bars) en sortie de régulateur.
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              {/* 4. FLYWHEEL / SHOOTER CALCULATOR */}
+              {activeCalc === 'flywheel' && (
+                <div style={styles.calcFlex}>
+                  <div style={styles.calcInputs}>
+                    <h3 style={styles.calcTitle}>Flywheel / Shooter Exit Velocity</h3>
+                    <p style={styles.calcDesc}>Estimez la vitesse de sortie théorique d'un projectile (Notes FRC, balles) propulsé par un volant d'inertie de lanceur.</p>
+                    <div style={styles.inputGrid}>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Diamètre du volant d'inertie (pouces)</label>
+                        <input type="number" step="0.5" value={wheelDiam} onChange={(e) => setWheelDiam(Math.max(0.1, parseFloat(e.target.value) || 0.1))} style={styles.input} />
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Régime du volant (RPM)</label>
+                        <input type="number" step="100" value={flywheelRpm} onChange={(e) => setFlywheelRpm(Math.max(0, parseInt(e.target.value) || 0))} style={styles.input} />
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Efficacité de compression (glissement)</label>
+                        <select value={compressionRatio} onChange={(e) => setCompressionRatio(parseFloat(e.target.value))} style={styles.select}>
+                          <option value="1.0">100% (Prise directe parfaite, sans glissement)</option>
+                          <option value="0.85">85% (Glissement de contact de compression standard)</option>
+                          <option value="0.75">75% (Glissement lourd / volant léger)</option>
+                        </select>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div style={styles.calcResults}>
+                    <h4 style={styles.resultsHeading}>Vélocité de Lancement</h4>
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>Vitesse de surface roue :</span>
+                      <span style={styles.resultValue}>{flywheelSpeed.surfMps} m/s ({flywheelSpeed.surfFps} ft/s)</span>
+                    </div>
+                    <div style={styles.resultDivider}></div>
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>Vitesse de sortie projectile :</span>
+                      <span style={{...styles.resultValueHighlight, color: '#10b981'}}>{flywheelSpeed.ballMps} m/s</span>
+                    </div>
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>En pieds par seconde :</span>
+                      <span style={styles.resultValueHighlight}>{flywheelSpeed.ballFps} ft/s</span>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* 5. ARM & ELEVATOR CALCULATOR */}
+              {activeCalc === 'arm-elevator' && (
+                <div style={styles.calcFlex}>
+                  <div style={styles.calcInputs}>
+                    <h3 style={styles.calcTitle}>Calculateur de charges Mécanismes Lourds</h3>
+                    <p style={styles.calcDesc}>Vérifiez si votre réducteur offre un couple de maintien suffisant sous la limite de disjoncteur FRC de 40A.</p>
+                    <div style={styles.inputGrid}>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Type de Mécanisme</label>
+                        <select value={mechType} onChange={(e) => setMechType(e.target.value)} style={styles.select}>
+                          <option value="elevator">Élévateur Linéaire (Spool / Poulie)</option>
+                          <option value="arm">Bras Articulé (Pivot angulaire)</option>
+                        </select>
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Moteur associé</label>
+                        <select value={selectedMotorType} onChange={(e) => setSelectedMotorType(e.target.value)} style={styles.select}>
+                          <option value="kraken">Kraken X60</option>
+                          <option value="neo">REV NEO</option>
+                          <option value="neo550">NEO 550</option>
+                        </select>
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Masse en mouvement (kg)</label>
+                        <input type="number" value={weight} onChange={(e) => setWeight(Math.max(1, parseFloat(e.target.value) || 1))} style={styles.input} />
+                      </div>
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>Démultiplication / Ratio total</label>
+                        <input type="number" value={mechReduction} onChange={(e) => setMechReduction(Math.max(1, parseFloat(e.target.value) || 1))} style={styles.input} />
+                      </div>
+                      {mechType === 'elevator' ? (
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Rayon Enrouleur / Poulie (mm)</label>
+                          <input type="number" value={elevatorRadius} onChange={(e) => setElevatorRadius(Math.max(1, parseInt(e.target.value) || 1))} style={styles.input} />
+                        </div>
+                      ) : (
+                        <div style={styles.formGroup}>
+                          <label style={styles.label}>Longueur du Bras (mètres)</label>
+                          <input type="number" step="0.1" value={armLength} onChange={(e) => setArmLength(Math.max(0.1, parseFloat(e.target.value) || 0.1))} style={styles.input} />
+                        </div>
+                      )}
+                    </div>
+                  </div>
+
+                  <div style={styles.calcResults}>
+                    <h4 style={styles.resultsHeading}>Analyse Limites sous 40A</h4>
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>Masse de calage max (Stall Load) :</span>
+                      <span style={{...styles.resultValueHighlight, color: 'var(--brand-red)'}}>{lifterStats.maxWeight} kg</span>
+                    </div>
+                    <div style={styles.resultDivider}></div>
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>{mechType === 'elevator' ? 'Vitesse de montée target :' : 'Vitesse angulaire target :'}</span>
+                      <span style={styles.resultValue}>{lifterStats.loadedSpeed} {mechType === 'elevator' ? 'm/s' : '°/s'}</span>
+                    </div>
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>{mechType === 'elevator' ? 'Temps de montée (pour 1m) :' : 'Temps de rotation (90°) :'}</span>
+                      <span style={{...styles.resultValueHighlight, color: '#10b981'}}>{lifterStats.time} secondes</span>
                     </div>
                   </div>
                 </div>
@@ -509,138 +612,114 @@ export default function ResourcesPage() {
           </div>
         )}
 
-        {/* TAB 2: CONVERTERS & CLEARANCES */}
-        {activeTab === 'converters' && (
+        {/* TAB 2: GENERAL REFERENCE & PLAYGROUNDS */}
+        {activeTab === 'info' && (
           <div style={styles.convertersGrid}>
             
-            {/* Quick Conversion Cards */}
+            {/* MOTOR PLAYGROUND COMPARATOR */}
             <div className="glass-panel" style={styles.convCard}>
-              <h3 style={styles.calcTitle}>Convertisseur d'unités de mesures</h3>
-              <p style={styles.calcDesc}>Passez instantanément du système impérial au système métrique pour vos fixations ou calculs de moteurs.</p>
+              <h3 style={styles.calcTitle}>Motor Playground FRC</h3>
+              <p style={styles.calcDesc}>Comparez côte-à-côte les performances réelles des moteurs brushless phares de la FRC.</p>
               
-              <div style={styles.convRow}>
-                <div style={styles.convInputGroup}>
-                  <label style={styles.label}>Pouces (inches)</label>
-                  <input 
-                    type="number" 
-                    value={inchVal} 
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value) || 0;
-                      setInchVal(v);
-                      setMmVal(+(v * 25.4).toFixed(4));
-                    }}
-                    style={styles.input} 
-                  />
+              <div style={styles.playgroundSelectors}>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Moteur A</label>
+                  <select value={playMotorA} onChange={(e) => setPlayMotorA(e.target.value)} style={styles.select}>
+                    <option value="kraken">Kraken X60</option>
+                    <option value="neo">REV NEO</option>
+                    <option value="neo550">NEO 550</option>
+                    <option value="falcon">Falcon 500</option>
+                  </select>
                 </div>
-                <div style={styles.convSeparator}>↔</div>
-                <div style={styles.convInputGroup}>
-                  <label style={styles.label}>Millimètres (mm)</label>
-                  <input 
-                    type="number" 
-                    value={mmVal} 
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value) || 0;
-                      setMmVal(v);
-                      setInchVal(+(v / 25.4).toFixed(4));
-                    }}
-                    style={styles.input} 
-                  />
+                <div style={styles.playgroundVs}>VS</div>
+                <div style={styles.formGroup}>
+                  <label style={styles.label}>Moteur B</label>
+                  <select value={playMotorB} onChange={(e) => setPlayMotorB(e.target.value)} style={styles.select}>
+                    <option value="kraken">Kraken X60</option>
+                    <option value="neo">REV NEO</option>
+                    <option value="neo550">NEO 550</option>
+                    <option value="falcon">Falcon 500</option>
+                  </select>
                 </div>
               </div>
 
-              <div style={styles.convDivider}></div>
-
-              <div style={styles.convRow}>
-                <div style={styles.convInputGroup}>
-                  <label style={styles.label}>Couple oz-in</label>
-                  <input 
-                    type="number" 
-                    value={ozInVal} 
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value) || 0;
-                      setOzInVal(v);
-                      setKgCmVal(+(v * 0.072007).toFixed(4));
-                      setNmVal(+(v * 0.007062).toFixed(4));
-                    }}
-                    style={styles.input} 
-                  />
-                </div>
-                <div style={styles.convSeparator}>↔</div>
-                <div style={styles.convInputGroup}>
-                  <label style={styles.label}>Couple kg-cm</label>
-                  <input 
-                    type="number" 
-                    value={kgCmVal} 
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value) || 0;
-                      setKgCmVal(v);
-                      setOzInVal(+(v / 0.072007).toFixed(2));
-                      setNmVal(+(v * 0.0980665).toFixed(4));
-                    }}
-                    style={styles.input} 
-                  />
-                </div>
-                <div style={styles.convSeparator}>↔</div>
-                <div style={styles.convInputGroup}>
-                  <label style={styles.label}>Couple N.m</label>
-                  <input 
-                    type="number" 
-                    value={nmVal} 
-                    onChange={(e) => {
-                      const v = parseFloat(e.target.value) || 0;
-                      setNmVal(v);
-                      setOzInVal(+(v / 0.007062).toFixed(2));
-                      setKgCmVal(+(v / 0.0980665).toFixed(2));
-                    }}
-                    style={styles.input} 
-                  />
-                </div>
-              </div>
-            </div>
-
-            {/* Clearance & Tap Drill Table */}
-            <div className="glass-panel" style={styles.convCard}>
-              <div style={styles.convCardHeader}>
-                <h3 style={styles.calcTitle}>Tolérances & Perçages Vis Métriques</h3>
-                <input 
-                  type="text"
-                  placeholder="Filtrer (ex: M3)..."
-                  value={clearanceSearch}
-                  onChange={(e) => setClearanceSearch(e.target.value)}
-                  style={styles.tableSearchInput}
-                />
-              </div>
-              <p style={styles.calcDesc}>Renseignements de perçages pour le taraudage direct ou les trous de passage (serrés/libres).</p>
-              
+              {/* Side-by-side comparison table */}
               <div style={styles.tableWrapper}>
                 <table style={styles.table}>
                   <thead>
                     <tr>
-                      <th style={styles.th}>Taille</th>
-                      <th style={styles.th}>Pas de vis</th>
-                      <th style={styles.th}>Trou taraud</th>
-                      <th style={styles.th}>Passage Serré</th>
-                      <th style={styles.th}>Passage Libre</th>
+                      <th style={styles.th}>Paramètres</th>
+                      <th style={{...styles.th, color: motorsDb[playMotorA].color}}>{motorsDb[playMotorA].name}</th>
+                      <th style={{...styles.th, color: motorsDb[playMotorB].color}}>{motorsDb[playMotorB].name}</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredClearance.map((d, index) => (
-                      <tr key={index} style={{
-                        ...styles.tr,
-                        backgroundColor: index % 2 === 0 ? 'rgba(255, 255, 255, 0.01)' : 'transparent'
-                      }}>
+                    <tr style={styles.tr}>
+                      <td style={styles.td}>Vitesse Libre (Free Speed)</td>
+                      <td style={styles.td}>{motorsDb[playMotorA].freeSpeed} RPM</td>
+                      <td style={styles.td}>{motorsDb[playMotorB].freeSpeed} RPM</td>
+                    </tr>
+                    <tr style={styles.tr}>
+                      <td style={styles.td}>Couple calage max (Peak Stall)</td>
+                      <td style={styles.td}>{motorsDb[playMotorA].stallTorque} N.m</td>
+                      <td style={styles.td}>{motorsDb[playMotorB].stallTorque} N.m</td>
+                    </tr>
+                    <tr style={styles.tr}>
+                      <td style={styles.td}>Constant de couple ($K_t$)</td>
+                      <td style={styles.td}>{motorsDb[playMotorA].kt.toFixed(3)} N.m/A</td>
+                      <td style={styles.td}>{motorsDb[playMotorB].kt.toFixed(3)} N.m/A</td>
+                    </tr>
+                    <tr style={styles.tr}>
+                      <td style={styles.td}>Couple réel bridé (40A)</td>
+                      <td style={{...styles.td, fontWeight: '700'}}>{Math.min(motorsDb[playMotorA].stallTorque, motorsDb[playMotorA].kt * 40).toFixed(2)} N.m</td>
+                      <td style={{...styles.td, fontWeight: '700'}}>{Math.min(motorsDb[playMotorB].stallTorque, motorsDb[playMotorB].kt * 40).toFixed(2)} N.m</td>
+                    </tr>
+                    <tr style={styles.tr}>
+                      <td style={styles.td}>Puissance max théorique</td>
+                      <td style={styles.td}>{motorsDb[playMotorA].peakPower} W</td>
+                      <td style={styles.td}>{motorsDb[playMotorB].peakPower} W</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+
+            {/* QUICK UNIT CONVERTERS & CLEARENCE */}
+            <div className="glass-panel" style={styles.convCard}>
+              <h3 style={styles.calcTitle}>Convertisseur rapide & Perçages Vis</h3>
+              <p style={styles.calcDesc}>Passez instantanément du système impérial au système métrique pour vos fixations ou calculs.</p>
+              
+              <div style={styles.convRow}>
+                <div style={styles.convInputGroup}>
+                  <label style={styles.label}>Pouces (inches)</label>
+                  <input type="number" value={inchVal} onChange={(e) => { const v = parseFloat(e.target.value) || 0; setInchVal(v); setMmVal(+(v * 25.4).toFixed(3)); }} style={styles.input} />
+                </div>
+                <div style={styles.convSeparator}>↔</div>
+                <div style={styles.convInputGroup}>
+                  <label style={styles.label}>Millimètres (mm)</label>
+                  <input type="number" value={mmVal} onChange={(e) => { const v = parseFloat(e.target.value) || 0; setMmVal(v); setInchVal(+(v / 25.4).toFixed(3)); }} style={styles.input} />
+                </div>
+              </div>
+
+              <div style={{ ...styles.tableWrapper, marginTop: '10px' }}>
+                <table style={styles.table}>
+                  <thead>
+                    <tr>
+                      <th style={styles.th}>Taille</th>
+                      <th style={styles.th}>Trou taraud</th>
+                      <th style={styles.th}>Serré</th>
+                      <th style={styles.th}>Libre</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {clearanceData.slice(2, 6).map((d, index) => (
+                      <tr key={index} style={styles.tr}>
                         <td style={{...styles.td, fontWeight: '700'}}>{d.size}</td>
-                        <td style={styles.td}>{d.pitch}</td>
                         <td style={{...styles.td, color: 'var(--brand-red)', fontWeight: '600'}}>{d.tapDrill}</td>
                         <td style={styles.td}>{d.drillTight}</td>
                         <td style={styles.td}>{d.drillFree}</td>
                       </tr>
                     ))}
-                    {filteredClearance.length === 0 && (
-                      <tr>
-                        <td colSpan="5" style={styles.tdEmpty}>Aucun résultat correspondant.</td>
-                      </tr>
-                    )}
                   </tbody>
                 </table>
               </div>
@@ -649,47 +728,56 @@ export default function ResourcesPage() {
           </div>
         )}
 
-        {/* TAB 3: USEFUL LINKS */}
-        {activeTab === 'links' && (
-          <div style={styles.linksGrid}>
-            {linksData.map((category, idx) => (
-              <div key={idx} className="glass-panel" style={styles.categoryCard}>
-                <h3 style={styles.categoryTitle}>{category.category}</h3>
-                <div style={styles.linksList}>
-                  {category.items.map((link, lIdx) => (
-                    <div key={lIdx} style={styles.linkItem}>
-                      <div style={styles.linkHeader}>
-                        <span style={styles.linkLabel}>{link.name}</span>
-                        <div style={styles.linkButtons}>
-                          <button 
-                            onClick={() => triggerCopy(link.url, link.name)} 
-                            style={styles.copyBtn}
-                            title="Copier le lien"
-                          >
-                            {copiedLink === link.name ? (
-                              <CheckCircle2 size={13} style={{ color: '#10b981' }} />
-                            ) : (
-                              <Copy size={13} />
-                            )}
-                          </button>
-                          <a 
-                            href={link.url} 
-                            target="_blank" 
-                            rel="noopener noreferrer" 
-                            style={styles.externalLink}
-                            title="Ouvrir le site"
-                          >
-                            <ExternalLink size={13} />
-                          </a>
+        {/* TAB 3: USEFUL LINKS & SHORTCUTS */}
+        {activeTab === 'shortcuts' && (
+          <div style={styles.shortcutsContainer}>
+            <div style={styles.warningAlert}>
+              <AlertTriangle size={18} style={{ color: '#f59e0b' }} />
+              <span>
+                Ces raccourcis et liens officiels de la saison FRC sont fournis comme référence pour faciliter l'accès de l'équipe lors des phases de conception (CAD) et de programmation.
+              </span>
+            </div>
+
+            <div style={styles.linksGrid}>
+              {linksData.map((category, idx) => (
+                <div key={idx} className="glass-panel" style={styles.categoryCard}>
+                  <h3 style={styles.categoryTitle}>{category.category}</h3>
+                  <div style={styles.linksList}>
+                    {category.items.map((link, lIdx) => (
+                      <div key={lIdx} style={styles.linkItem}>
+                        <div style={styles.linkHeader}>
+                          <span style={styles.linkLabel}>{link.name}</span>
+                          <div style={styles.linkButtons}>
+                            <button 
+                              onClick={() => triggerCopy(link.url, link.name)} 
+                              style={styles.copyBtn}
+                              title="Copier le lien"
+                            >
+                              {copiedLink === link.name ? (
+                                <CheckCircle2 size={13} style={{ color: '#10b981' }} />
+                              ) : (
+                                <Copy size={13} />
+                              )}
+                            </button>
+                            <a 
+                              href={link.url} 
+                              target="_blank" 
+                              rel="noopener noreferrer" 
+                              style={styles.externalLink}
+                              title="Ouvrir le site"
+                            >
+                              <ExternalLink size={13} />
+                            </a>
+                          </div>
                         </div>
+                        <p style={styles.linkDesc}>{link.desc}</p>
+                        <span style={styles.linkUrlText}>{link.url}</span>
                       </div>
-                      <p style={styles.linkDesc}>{link.desc}</p>
-                      <span style={styles.linkUrlText}>{link.url}</span>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
         )}
 
@@ -751,7 +839,8 @@ const styles = {
   calcLayout: {
     display: 'flex',
     gap: '20px',
-    flex: 1
+    flex: 1,
+    minHeight: '450px'
   },
   calcSidebar: {
     width: '240px',
@@ -776,7 +865,8 @@ const styles = {
     boxShadow: 'var(--shadow-md)',
     display: 'flex',
     flexDirection: 'column',
-    backgroundColor: 'var(--bg-card)'
+    backgroundColor: 'var(--bg-card)',
+    minHeight: '400px'
   },
   calcFlex: {
     display: 'flex',
@@ -835,58 +925,17 @@ const styles = {
     fontSize: '0.875rem',
     cursor: 'pointer'
   },
-  motorRadioGroup: {
-    display: 'flex',
-    gap: '8px',
-    marginTop: '2px'
-  },
-  motorBadgeBtn: {
-    flex: 1,
-    padding: '8px 4px',
-    fontSize: '0.8rem',
-    fontWeight: '600',
-    borderRadius: 'var(--border-radius-sm)',
-    cursor: 'pointer',
-    transition: 'all var(--transition-fast)'
-  },
-  currentLimitInputRow: {
+  playgroundSelectors: {
     display: 'flex',
     alignItems: 'center',
     gap: '12px',
-    marginTop: '4px'
+    marginBottom: '10px'
   },
-  rangeInput: {
-    flex: 1,
-    height: '6px',
-    backgroundColor: 'var(--border-color)',
-    borderRadius: '9999px',
-    appearance: 'none',
-    outline: 'none',
-    cursor: 'pointer'
-  },
-  currentLimitBadge: {
-    backgroundColor: 'var(--brand-red-alpha-20)',
-    color: 'var(--brand-red)',
+  playgroundVs: {
+    fontSize: '0.8rem',
     fontWeight: '700',
-    fontSize: '0.85rem',
-    padding: '4px 10px',
-    borderRadius: '9999px',
-    minWidth: '50px',
-    textAlign: 'center'
-  },
-  resetLimitBtn: {
-    backgroundColor: 'var(--bg-column)',
-    color: 'var(--text-main)',
-    fontSize: '0.75rem',
-    padding: '6px 12px',
-    borderRadius: 'var(--border-radius-sm)',
-    border: '1px solid var(--border-color)',
-    fontWeight: '600'
-  },
-  currentLimitHelpText: {
-    fontSize: '0.725rem',
-    color: 'var(--text-light)',
-    fontStyle: 'italic'
+    color: 'var(--brand-red)',
+    marginTop: '20px'
   },
   suitabilityPanel: {
     marginTop: '10px',
@@ -1002,21 +1051,6 @@ const styles = {
     flexDirection: 'column',
     gap: '12px'
   },
-  convCardHeader: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    gap: '12px'
-  },
-  tableSearchInput: {
-    backgroundColor: 'var(--bg-input)',
-    border: '1px solid var(--border-color)',
-    color: 'var(--text-main)',
-    padding: '6px 12px',
-    borderRadius: 'var(--border-radius-sm)',
-    fontSize: '0.8rem',
-    maxWidth: '180px'
-  },
   convRow: {
     display: 'flex',
     alignItems: 'center',
@@ -1062,11 +1096,6 @@ const styles = {
   td: {
     padding: '10px 8px'
   },
-  tdEmpty: {
-    padding: '20px 8px',
-    textAlign: 'center',
-    color: 'var(--text-muted)'
-  },
   linksGrid: {
     display: 'grid',
     gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
@@ -1101,10 +1130,7 @@ const styles = {
     borderRadius: 'var(--border-radius-sm)',
     backgroundColor: 'rgba(255, 255, 255, 0.01)',
     border: '1px solid rgba(255, 255, 255, 0.03)',
-    transition: 'transform var(--transition-fast)',
-    ':hover': {
-      transform: 'translateY(-1px)'
-    }
+    transition: 'transform var(--transition-fast)'
   },
   linkHeader: {
     display: 'flex',
@@ -1125,22 +1151,14 @@ const styles = {
     color: 'var(--text-muted)',
     cursor: 'pointer',
     padding: '4px',
-    borderRadius: '4px',
-    ':hover': {
-      color: 'var(--text-main)',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)'
-    }
+    borderRadius: '4px'
   },
   externalLink: {
     color: 'var(--text-muted)',
     cursor: 'pointer',
     padding: '4px',
     borderRadius: '4px',
-    display: 'inline-flex',
-    ':hover': {
-      color: 'var(--brand-red)',
-      backgroundColor: 'rgba(255, 255, 255, 0.05)'
-    }
+    display: 'inline-flex'
   },
   linkDesc: {
     fontSize: '0.775rem',
@@ -1154,5 +1172,29 @@ const styles = {
     textOverflow: 'ellipsis',
     overflow: 'hidden',
     whiteSpace: 'nowrap'
+  },
+  shortcutsContainer: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '20px'
+  },
+  warningAlert: {
+    padding: '12px 16px',
+    backgroundColor: 'rgba(245, 158, 11, 0.08)',
+    border: '1px solid rgba(245, 158, 11, 0.2)',
+    borderRadius: 'var(--border-radius-md)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    fontSize: '0.85rem',
+    color: '#d97706',
+    lineHeight: '1.4'
+  },
+  currentLimitHelpText: {
+    fontSize: '0.75rem',
+    color: 'var(--text-light)',
+    fontStyle: 'italic',
+    lineHeight: '1.3',
+    marginTop: '6px'
   }
 };
