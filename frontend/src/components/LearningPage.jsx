@@ -119,12 +119,68 @@ export default function LearningPage({ onSelectBoard }) {
         const extracted = extractHeadings(text);
         setHeadings(extracted);
 
-        // --- Structured Two-Pass HTML Compiler ---
-        // Pass 1: Parse standard markdown to HTML
-        const parsedHtml = marked.parse(text);
+        // --- Structured Two-Pass HTML Compiler with Math Placeholders ---
+        let mathBlocks = [];
+        let textWithPlaceholders = text;
 
-        // Pass 2: Run custom HTML regex expansions (Math, Flowchart and Admonitions)
-        const compiledHtml = compileCustomElements(parsedHtml);
+        const translateMath = (formula) => {
+          let f = formula;
+          // Replace \frac{A}{B} with styled fraction markup
+          f = f.replace(/\\frac\{([\s\S]*?)\}\{([\s\S]*?)\}/g, '<div class="math-fraction"><span class="math-numerator">$1</span><span class="math-denominator">$2</span></div>');
+          // Replace \text{A} with plain text
+          f = f.replace(/\\text\{([\s\S]*?)\}/g, '$1');
+          // Replace \mathbf{A} or \mathbf A with bold HTML
+          f = f.replace(/\\mathbf\{([\s\S]*?)\}/g, '<b>$1</b>');
+          f = f.replace(/\\mathbf\s*([a-zA-Z0-9])/g, '<b>$1</b>');
+          // Replace _{A} or _A with standard subscript
+          f = f.replace(/_\{([\s\S]*?)\}/g, '<sub>$1</sub>');
+          f = f.replace(/_([a-zA-Z0-9\u00C0-\u017F\-]+)/g, '<sub>$1</sub>');
+          // Replace ^{A} or ^A with standard superscript
+          f = f.replace(/\^\{([\s\S]*?)\}/g, '<sup>$1</sup>');
+          f = f.replace(/\^([a-zA-Z0-9\u00C0-\u017F\-]+)/g, '<sup>$1</sup>');
+          // Replace LaTeX specific mathematical operational symbols
+          f = f.replace(/\\times/g, ' × ');
+          f = f.replace(/\\approx/g, ' ≈ ');
+          f = f.replace(/\\cdot/g, ' · ');
+          f = f.replace(/\\mu/g, 'μ');
+          f = f.replace(/\\omega/g, 'ω');
+          f = f.replace(/\\theta/g, 'θ');
+          f = f.replace(/\\eta/g, 'η');
+          f = f.replace(/\\mathbf/g, ''); // cleanup any leftover
+          return f;
+        };
+
+        // 1. Extract and compile block math $$ ... $$
+        textWithPlaceholders = textWithPlaceholders.replace(/\$\$([\s\S]*?)\$\$/g, (match, formula) => {
+          const index = mathBlocks.length;
+          const compiledMath = `<div class="math-equation">${translateMath(formula)}</div>`;
+          mathBlocks.push(compiledMath);
+          return `___MATH_PLACEHOLDER_${index}___`;
+        });
+
+        // 2. Extract and compile inline math $ ... $
+        textWithPlaceholders = textWithPlaceholders.replace(/\$([\s\S]*?)\$/g, (match, formula) => {
+          const index = mathBlocks.length;
+          const compiledMath = `<span class="math-inline">${translateMath(formula)}</span>`;
+          mathBlocks.push(compiledMath);
+          return `___MATH_PLACEHOLDER_${index}___`;
+        });
+
+        // Pass 1: Parse standard markdown to HTML
+        const parsedHtml = marked.parse(textWithPlaceholders);
+
+        // Pass 2: Run custom HTML regex expansions (Flowchart and Admonitions)
+        let compiledHtml = compileCustomElements(parsedHtml);
+
+        // Restore math placeholders
+        mathBlocks.forEach((compiledMath, index) => {
+          const pWrappedPlaceholder = `<p>___MATH_PLACEHOLDER_${index}___</p>`;
+          if (compiledHtml.includes(pWrappedPlaceholder)) {
+            compiledHtml = compiledHtml.replace(pWrappedPlaceholder, compiledMath);
+          } else {
+            compiledHtml = compiledHtml.replace(`___MATH_PLACEHOLDER_${index}___`, compiledMath);
+          }
+        });
         
         // Inject IDs into HTML headings for scrollspy links
         const finalHtml = injectHeadingIds(compiledHtml);
