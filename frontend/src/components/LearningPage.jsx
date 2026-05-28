@@ -1,270 +1,578 @@
-import React from 'react';
-import { Book, Video, MonitorPlay, ExternalLink, Presentation, Code, Wrench, Settings } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { marked } from 'marked';
+import { 
+  BookOpen, ChevronRight, ChevronDown, Menu, X, ArrowLeft,
+  List, PlayCircle, FileText, Compass, ExternalLink, Presentation
+} from 'lucide-react';
 
-export default function LearningPage() {
-  const learningSections = [
-    {
-      category: "Fondamentaux & Mécanique",
-      icon: <Settings size={20} />,
-      items: [
-        { name: "Technical Resources | FIRST Robotics Competition", url: "https://www.firstinspires.org/resources/library/frc/technical-resources", type: "link", desc: "Ressources techniques officielles de FIRST." },
-        { name: "The Unofficial FRC Mechanism Encyclopedia", url: "https://www.projectb.net.au/resources/robot-mechanisms/#GPE", type: "link", desc: "L'encyclopédie non-officielle des mécanismes de robots (Project Bucephalus)." },
-        { name: "Hardware Basics — FIRST Robotics Competition", url: "https://docs.wpilib.org/en/stable/docs/hardware/hardware-basics/index.html", type: "link", desc: "Les bases du matériel en FRC." },
-        { name: "Hardware Tutorials", url: "https://docs.wpilib.org/en/stable/docs/hardware/hardware-tutorials/index.html#", type: "link", desc: "Tutoriels sur le matériel FRC." },
-        { name: "NASA RAP Robotics Design Guide", url: "https://robotics.nasa.gov/nasa-rap-robotics-design-guide/", type: "link", desc: "Guide de conception robotique par la NASA." },
-        { name: "NASA FRC Resources", url: "https://robotics.nasa.gov/frc-resources/", type: "link", desc: "Ressources FRC de la NASA." },
-        { name: "LYNK Library of Knowledge", url: "https://docs.lynkrobotics.org/#gsc.tab=0", type: "link", desc: "Bibliothèque de connaissances LYNK Robotics." },
-        { name: "FRC Robot Basics Guide (REV)", url: "https://www.revrobotics.com/content/docs/FRC-Robot-Basics-Guide.pdf", type: "pdf", desc: "Guide des bases d'un robot FRC par REV Robotics." },
-        { name: "Design 101", url: "https://www.firstinspires.org/hubfs/web/program/frc/resources/design-101.pdf?hsLang=en", type: "pdf", desc: "Principes de base du design en robotique." },
-        { name: "FRC Guide - Arpan Rao", url: "https://hcwilson.weebly.com/uploads/3/8/4/6/38463501/frc_guide_-_arpan_rao.pdf", type: "pdf", desc: "Un guide FRC complet." },
-        { name: "Design Spectrum 3847", url: "http://design.spectrum3847.org/", type: "link", desc: "Ressources de conception de l'équipe Spectrum 3847." },
-        { name: "Inexpensive Build Tips", url: "https://www.spectrum3847.org/resources/inexpensive-build-tips", type: "link", desc: "Conseils de construction à faible coût par Spectrum 3847." }
-      ]
-    },
-    {
-      category: "Organisation d'Équipe",
-      icon: <Book size={20} />,
-      items: [
-        { name: "Team Organization | Spectrum3847", url: "https://www.spectrum3847.org/resources/other-teams-resources/team-organization", type: "link", desc: "Comment organiser efficacement une équipe FRC." }
-      ]
-    },
-    {
-      category: "Conception Assistée par Ordinateur (CAD)",
-      icon: <Wrench size={20} />,
-      items: [
-        { name: "Onshape Fundamentals: CAD", url: "https://learn.onshape.com/collections/onshape-fundamentals-cad", type: "link", desc: "Apprendre les bases d'Onshape pour la CAO." }
-      ]
-    },
-    {
-      category: "Cours Spécifiques & Slides",
-      icon: <Presentation size={20} />,
-      items: [
-        { name: "D1.1 Overview of FRC Robots", url: "https://docs.google.com/presentation/d/1IMirGYkg5m0WvAMZfOa9wDqTR74IMB_VLnsSxgjjoD8/edit", type: "slide", desc: "Vue d'ensemble des robots FRC.", video: "https://www.youtube.com/watch?v=86NCQfrjNr0" },
-        { name: "F1.1 What is FRC?", url: "https://docs.google.com/presentation/d/1HGakEB6jhE4WON5OCA4wB5tr2pTyJo5cIO3TNS4YmfQ/edit", type: "slide", desc: "Introduction générale à la FIRST Robotics Competition." },
-        { name: "F1.2 What do team members do?", url: "https://docs.google.com/presentation/d/1HGakEB6jhE4WON5OCA4wB5tr2pTyJo5cIO3TNS4YmfQ/edit", type: "slide", desc: "Rôles et responsabilités dans l'équipe." },
-        { name: "B2.5 FRC 3D Printed Parts", url: "https://docs.google.com/presentation/d/1w-zGo9hEuVamzVrmhK3MJni0aftu0k9ZUnMRb93MIrI/edit#slide=id.p", type: "slide", desc: "Utilisation de pièces imprimées en 3D en FRC." },
-        { name: "B3.1 Maintenance and Triage", url: "https://docs.google.com/presentation/d/1m0f9urPvA5mDsYUIbJfKmZDw2Bal5va4vqTf4cG_kvM/edit#slide=id.p", type: "slide", desc: "Maintenance et diagnostic du robot.", video: "https://www.youtube.com/watch?v=TsYSL9athTk" },
-        { name: "Build Self-Learning Resources", url: "https://docs.google.com/presentation/d/e/2PACX-1vRaIkRvKioVmcl1P6vpddYPYC43QjaxsRZu6qavmp3lNpBcQ0noBf91Pv4N8DwSDgcxdfG2IoPqTNs7/pub?start=false&loop=false&delayms=3000", type: "slide", desc: "Ressources d'auto-apprentissage pour la construction." },
-        { name: "Slides Additionnels (Hardware/Wiring)", url: "https://docs.google.com/presentation/d/1whyvTc-HmHIQoMQok2rVF6ahzuzkDI1A4BrMUjpHwMc/edit?slide=id.g2c2c9bf8b8_0_96", type: "slide", desc: "Concepts électriques et de câblage." }
-      ]
-    },
-    {
-      category: "Vidéos Complémentaires",
-      icon: <MonitorPlay size={20} />,
-      items: [
-        { name: "Présentation FRC (YouTube)", url: "https://www.youtube.com/watch?v=K0oyG6LqFpY", type: "video", desc: "Aperçu de la compétition et des robots." }
-      ]
+const chapters = [
+  {
+    title: "1. Introduction à la FRC",
+    id: "intro",
+    items: [
+      { id: "f1_1_what_is_frc", name: "F1.1 - Qu'est-ce que la FRC ?", file: "f1_1_what_is_frc.md" },
+      { id: "f1_2_team_roles", name: "F1.2 - Les Rôles dans l'Équipe", file: "f1_2_team_roles.md" },
+      { id: "d1_1_robot_anatomy", name: "D1.1 - Anatomie d'un Robot FRC", file: "d1_1_robot_anatomy.md" }
+    ]
+  },
+  {
+    title: "2. Conception Mécanique & CAO",
+    id: "mech",
+    items: [
+      { id: "m1_1_cad_onshape", name: "M1.1 - CAO avec Onshape", file: "m1_1_cad_onshape.md" },
+      { id: "m1_2_gears_motors", name: "M1.2 - Engrenages & Moteurs", file: "m1_2_gears_motors.md" },
+      { id: "m1_3_mechanisms", name: "M1.3 - Conception de Mécanismes", file: "m1_3_mechanisms.md" }
+    ]
+  },
+  {
+    title: "3. Électronique & Câblage",
+    id: "elec",
+    items: [
+      { id: "h1_1_control_system", name: "H1.1 - Le Système de Contrôle", file: "h1_1_control_system.md" },
+      { id: "h1_2_wiring_practices", name: "H1.2 - Bonnes Pratiques de Câblage", file: "h1_2_wiring_practices.md" },
+      { id: "h1_3_3d_printing", name: "H1.3 - Impression 3D pour la FRC", file: "h1_3_3d_printing.md" }
+    ]
+  },
+  {
+    title: "4. Fiabilité & Stands",
+    id: "triage",
+    items: [
+      { id: "s1_1_maintenance_triage", name: "S1.1 - Maintenance & Triage", file: "s1_1_maintenance_triage.md" }
+    ]
+  }
+];
+
+export default function LearningPage({ onSelectBoard }) {
+  const [activeChapterId, setActiveChapterId] = useState('intro');
+  const [activeArticleId, setActiveArticleId] = useState('f1_1_what_is_frc');
+  const [activeArticle, setActiveArticle] = useState(chapters[0].items[0]);
+  const [markdownContent, setMarkdownContent] = useState('');
+  const [htmlContent, setHtmlContent] = useState('');
+  const [headings, setHeadings] = useState([]);
+  
+  // Collapse state for mobile sidebars
+  const [leftSidebarOpen, setLeftSidebarOpen] = useState(false);
+  const [collapsedChapters, setCollapsedChapters] = useState({
+    intro: false,
+    mech: false,
+    elec: false,
+    triage: false
+  });
+
+  const contentRef = useRef(null);
+
+  // Toggle chapter collapse
+  const toggleChapter = (id) => {
+    setCollapsedChapters(prev => ({
+      ...prev,
+      [id]: !prev[id]
+    }));
+  };
+
+  // Load article markdown
+  useEffect(() => {
+    const fetchArticle = async () => {
+      try {
+        const response = await fetch(`/courses/${activeArticle.file}`);
+        if (!response.ok) {
+          throw new Error("Impossible de charger le fichier de cours.");
+        }
+        const text = await response.text();
+        setMarkdownContent(text);
+        
+        // Extract headings for ToC
+        const extracted = extractHeadings(text);
+        setHeadings(extracted);
+
+        // Preprocess custom admonitions
+        const preprocessed = preprocessMarkdown(text);
+        
+        // Parse markdown to HTML
+        const parsedHtml = marked.parse(preprocessed);
+        
+        // Inject IDs into parsed HTML headings for anchor scrolls
+        const finalHtml = injectHeadingIds(parsedHtml);
+        setHtmlContent(finalHtml);
+
+        // Scroll main content pane to top when article changes
+        if (contentRef.current) {
+          contentRef.current.scrollTop = 0;
+        }
+      } catch (err) {
+        console.error(err);
+        setHtmlContent(`<div class="error-box">⚠️ Une erreur est survenue lors du chargement de cette leçon. Veuillez réessayer ou vérifier que le fichier existe.</div>`);
+      }
+    };
+
+    fetchArticle();
+  }, [activeArticle]);
+
+  // Preprocess Docusaurus admonitions :::tip, :::info etc. to HTML blocks
+  const preprocessMarkdown = (text) => {
+    if (!text) return '';
+    let parsed = text;
+    
+    // Replace :::type and :::
+    parsed = parsed.replace(/:::(tip|info|warning|danger|caution|note)(?:\s+(.*))?/g, (match, type, title) => {
+      const defaultTitles = {
+        tip: "CONSEIL",
+        info: "INFORMATION",
+        warning: "AVERTISSEMENT",
+        danger: "DANGER",
+        caution: "ATTENTION",
+        note: "NOTE"
+      };
+      const emojis = {
+        tip: "💡",
+        info: "ℹ️",
+        warning: "⚠️",
+        danger: "🚨",
+        caution: "⚡",
+        note: "📝"
+      };
+      const dispTitle = title || defaultTitles[type] || type.toUpperCase();
+      const emoji = emojis[type] || "📝";
+      return `<div class="admonition-box admonition-${type}"><div class="admonition-title">${emoji} ${dispTitle}</div><div class="admonition-content">`;
+    });
+    
+    // Replace closing :::
+    parsed = parsed.replace(/:::/g, '</div></div>');
+    
+    return parsed;
+  };
+
+  // Inject IDs to H2 and H3 for Anchor link scrolling
+  const injectHeadingIds = (html) => {
+    if (!html) return '';
+    const parser = new DOMParser();
+    const doc = parser.parseFromString(html, 'text/html');
+    
+    const headings = doc.querySelectorAll('h2, h3');
+    headings.forEach(heading => {
+      const text = heading.textContent || '';
+      const id = text.toLowerCase()
+                     .replace(/[^a-z0-9\s-]+/g, '') // remove special characters
+                     .replace(/\s+/g, '-')          // spaces to hyphens
+                     .replace(/(^-|-$)/g, '');      // trim hyphens
+      heading.setAttribute('id', id);
+    });
+    
+    return doc.body.innerHTML;
+  };
+
+  // Parse headers directly from markdown text to build Right ToC
+  const extractHeadings = (text) => {
+    if (!text) return [];
+    const lines = text.split('\n');
+    const list = [];
+    let inCodeBlock = false;
+    
+    for (let line of lines) {
+      if (line.trim().startsWith('```')) {
+        inCodeBlock = !inCodeBlock;
+        continue;
+      }
+      if (inCodeBlock) continue;
+      
+      const match = line.match(/^(#{2,3})\s+(.+)$/);
+      if (match) {
+        const level = match[1].length;
+        const textVal = match[2].replace(/[*_`]/g, '').trim();
+        const id = textVal.toLowerCase()
+                          .replace(/[^a-z0-9\s-]+/g, '')
+                          .replace(/\s+/g, '-')
+                          .replace(/(^-|-$)/g, '');
+        list.push({ level, text: textVal, id });
+      }
     }
-  ];
+    return list;
+  };
 
-  const getIconForType = (type) => {
-    switch (type) {
-      case 'slide': return <Presentation size={16} />;
-      case 'video': return <Video size={16} />;
-      case 'pdf': return <Book size={16} />;
-      case 'link':
-      default: return <ExternalLink size={16} />;
+  // Find parent chapter for Breadcrumbs
+  const activeChapter = chapters.find(c => c.items.some(i => i.id === activeArticleId));
+
+  // Exit Apprentissage and return to Kanban Board
+  const handleBackToDashboard = () => {
+    if (onSelectBoard) {
+      onSelectBoard('drivetrain', 'Tableau de bord');
     }
   };
 
   return (
-    <div style={styles.container}>
-      {/* Header Banner */}
-      <div style={styles.header}>
-        <div style={styles.headerContent}>
-          <h1 style={styles.title}>
-            <Book size={32} />
-            Centre d'Apprentissage
-          </h1>
-          <p style={styles.subtitle}>
-            Ressources, formations et cours pour l'apprentissage complet et profond de la robotique (FRC 6622).
-          </p>
+    <div style={styles.appContainer}>
+      
+      {/* 1. DOCUMENTATION SIDEBAR (LEFT) */}
+      <div style={{
+        ...styles.leftSidebar,
+        transform: leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
+        opacity: 1,
+      }} className="docs-sidebar">
+        
+        {/* Sidebar Header Escape */}
+        <div style={styles.sidebarHeader}>
+          <button onClick={handleBackToDashboard} style={styles.backBtn}>
+            <ArrowLeft size={16} />
+            <span>Vers Kanban</span>
+          </button>
+        </div>
+
+        {/* Navigation list */}
+        <div style={styles.sidebarNav}>
+          <div style={styles.navSectionTitle}>CURRICULUM ROBOTIQUE</div>
+          
+          {chapters.map((chapter) => {
+            const isCollapsed = collapsedChapters[chapter.id];
+            return (
+              <div key={chapter.id} style={styles.chapterGroup}>
+                <button 
+                  onClick={() => toggleChapter(chapter.id)} 
+                  style={styles.chapterToggle}
+                >
+                  <span style={styles.chapterTitle}>{chapter.title}</span>
+                  {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                </button>
+
+                {!isCollapsed && (
+                  <div style={styles.chapterItems}>
+                    {chapter.items.map((item) => {
+                      const isActive = activeArticleId === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => {
+                            setActiveArticleId(item.id);
+                            setActiveArticle(item);
+                            setLeftSidebarOpen(false); // Close mobile drawer on selection
+                          }}
+                          style={{
+                            ...styles.articleLink,
+                            color: isActive ? 'var(--brand-red)' : 'var(--text-sidebar-muted)',
+                            backgroundColor: isActive ? 'rgba(207, 39, 55, 0.08)' : 'transparent',
+                            fontWeight: isActive ? '600' : '400'
+                          }}
+                        >
+                          <FileText size={14} style={{ marginRight: '8px', flexShrink: 0 }} />
+                          <span style={{ textTransform: 'none' }}>{item.name}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Main Content Area */}
-      <div style={styles.content}>
-        {learningSections.map((section, idx) => (
-          <div key={idx} style={styles.sectionCard}>
-            <div style={styles.sectionHeader}>
-              <div style={styles.sectionIconWrapper}>
-                {section.icon}
-              </div>
-              <h2 style={styles.sectionTitle}>{section.category}</h2>
+      {/* 2. MAIN READING AREA (CENTER) */}
+      <div style={styles.mainContainer}>
+        
+        {/* Mobile Header Bar */}
+        <div style={styles.mobileHeader}>
+          <button 
+            onClick={() => setLeftSidebarOpen(!leftSidebarOpen)} 
+            style={styles.hamburgerBtn}
+          >
+            {leftSidebarOpen ? <X size={20} /> : <Menu size={20} />}
+          </button>
+          <div style={styles.mobileBrand}>
+            <span style={{ fontWeight: '800', color: 'var(--brand-red)' }}>STAN</span>
+            <span>ROBOTIX</span>
+          </div>
+          <button onClick={handleBackToDashboard} style={styles.mobileBackIconBtn} title="Retour au tableau de bord">
+            <ArrowLeft size={20} />
+          </button>
+        </div>
+
+        {/* Breadcrumbs Navigation */}
+        <div style={styles.breadcrumbs}>
+          <span style={styles.breadcrumbLink} onClick={handleBackToDashboard}>Tableau de bord</span>
+          <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
+          <span style={styles.breadcrumbText}>{activeChapter ? activeChapter.title : ''}</span>
+          <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
+          <span style={{ ...styles.breadcrumbText, color: 'var(--text-main)', fontWeight: '500' }}>{activeArticle.name}</span>
+        </div>
+
+        {/* Content Wrapper */}
+        <div style={styles.contentLayout}>
+          
+          {/* Main Markdown Body */}
+          <div 
+            ref={contentRef} 
+            style={styles.readingPane} 
+            className="markdown-body"
+          >
+            <div 
+              dangerouslySetInnerHTML={{ __html: htmlContent }} 
+              style={styles.markdownRender}
+            />
+          </div>
+
+          {/* 3. TABLE OF CONTENTS SIDEBAR (RIGHT) */}
+          <div style={styles.rightSidebar} className="toc-sidebar">
+            <div style={styles.tocTitle}>
+              <List size={16} style={{ marginRight: '8px' }} />
+              SUR CETTE PAGE
             </div>
             
-            <div style={styles.grid}>
-              {section.items.map((item, itemIdx) => (
-                <div key={itemIdx} style={styles.resourceCard}>
-                  <div style={styles.cardTop}>
-                    <span style={styles.typeIcon}>{getIconForType(item.type)}</span>
-                    <h3 style={styles.resourceTitle}>{item.name}</h3>
-                  </div>
-                  <p style={styles.resourceDesc}>{item.desc}</p>
-                  
-                  <div style={styles.cardActions}>
-                    <a 
-                      href={item.url} 
-                      target="_blank" 
-                      rel="noopener noreferrer" 
-                      style={styles.actionBtn}
-                    >
-                      <ExternalLink size={14} /> Consulter
-                    </a>
-                    {item.video && (
-                      <a 
-                        href={item.video} 
-                        target="_blank" 
-                        rel="noopener noreferrer" 
-                        style={{...styles.actionBtn, ...styles.actionBtnAlt}}
-                      >
-                        <Video size={14} /> Voir Vidéo
-                      </a>
-                    )}
-                  </div>
-                </div>
-              ))}
-            </div>
+            {headings.length === 0 ? (
+              <div style={styles.tocEmpty}>Aucun sous-titre dans cette leçon.</div>
+            ) : (
+              <div style={styles.tocList}>
+                {headings.map((h, i) => (
+                  <a
+                    key={i}
+                    href={`#${h.id}`}
+                    style={{
+                      ...styles.tocLink,
+                      paddingLeft: h.level === 3 ? '24px' : '12px',
+                      fontSize: h.level === 3 ? '0.8rem' : '0.85rem',
+                      color: 'var(--text-muted)'
+                    }}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      const element = document.getElementById(h.id);
+                      if (element) {
+                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                      }
+                    }}
+                  >
+                    {h.text}
+                  </a>
+                ))}
+              </div>
+            )}
           </div>
-        ))}
+
+        </div>
+
       </div>
+
     </div>
   );
 }
 
 const styles = {
-  container: {
-    flex: 1,
+  appContainer: {
+    display: 'flex',
+    width: '100vw',
     height: '100vh',
-    overflowY: 'auto',
+    overflow: 'hidden',
     backgroundColor: 'var(--bg-main)',
+    fontFamily: "'Inter', sans-serif",
+  },
+  
+  // Left Doc Navigation Sidebar
+  leftSidebar: {
+    width: '280px',
+    height: '100%',
+    backgroundColor: 'var(--bg-sidebar)',
+    borderRight: '1px solid var(--border-color)',
     display: 'flex',
     flexDirection: 'column',
-  },
-  header: {
-    background: 'linear-gradient(135deg, var(--brand-red) 0%, #8b0000 100%)',
-    padding: '3rem 2rem',
-    color: 'white',
     flexShrink: 0,
-    boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+    zIndex: 99,
+    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
   },
-  headerContent: {
-    maxWidth: '1200px',
-    margin: '0 auto',
-  },
-  title: {
-    fontSize: '2.5rem',
-    fontWeight: '800',
-    margin: '0 0 1rem 0',
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    letterSpacing: '-0.5px',
-  },
-  subtitle: {
-    fontSize: '1.1rem',
-    opacity: 0.9,
-    margin: 0,
-    maxWidth: '600px',
-    lineHeight: '1.6',
-  },
-  content: {
-    flex: 1,
-    padding: '2rem',
-    maxWidth: '1200px',
-    margin: '0 auto',
-    width: '100%',
-  },
-  sectionCard: {
-    backgroundColor: 'var(--bg-panel)',
-    borderRadius: '16px',
-    padding: '2rem',
-    marginBottom: '2rem',
-    border: '1px solid var(--border-color)',
-    boxShadow: 'var(--shadow-sm)',
-  },
-  sectionHeader: {
-    display: 'flex',
-    alignItems: 'center',
-    gap: '1rem',
-    marginBottom: '1.5rem',
-    paddingBottom: '1rem',
+  sidebarHeader: {
+    padding: '1rem',
     borderBottom: '1px solid var(--border-color)',
   },
-  sectionIconWrapper: {
-    backgroundColor: 'rgba(207, 39, 55, 0.1)',
-    color: 'var(--brand-red)',
-    padding: '0.75rem',
-    borderRadius: '12px',
+  backBtn: {
+    width: '100%',
     display: 'flex',
     alignItems: 'center',
     justifyContent: 'center',
-  },
-  sectionTitle: {
-    fontSize: '1.4rem',
-    fontWeight: '700',
-    color: 'var(--text-main)',
-    margin: 0,
-  },
-  grid: {
-    display: 'grid',
-    gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))',
-    gap: '1.5rem',
-  },
-  resourceCard: {
-    backgroundColor: 'var(--bg-main)',
+    gap: '0.5rem',
+    padding: '0.6rem',
+    backgroundColor: 'transparent',
     border: '1px solid var(--border-color)',
-    borderRadius: '12px',
-    padding: '1.5rem',
-    display: 'flex',
-    flexDirection: 'column',
-    transition: 'all 0.2s ease',
+    borderRadius: '8px',
+    color: 'var(--text-sidebar-muted)',
+    fontSize: '0.9rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
   },
-  cardTop: {
-    display: 'flex',
-    alignItems: 'flex-start',
-    gap: '0.75rem',
+  sidebarNav: {
+    flex: 1,
+    overflowY: 'auto',
+    padding: '1.5rem 1rem',
+  },
+  navSectionTitle: {
+    fontSize: '0.75rem',
+    fontWeight: '800',
+    color: 'var(--brand-red)',
+    letterSpacing: '1px',
+    marginBottom: '1rem',
+    paddingLeft: '0.5rem',
+  },
+  chapterGroup: {
     marginBottom: '0.75rem',
   },
-  typeIcon: {
-    color: 'var(--text-muted)',
-    marginTop: '0.15rem',
-  },
-  resourceTitle: {
-    fontSize: '1.1rem',
-    fontWeight: '600',
-    color: 'var(--text-main)',
-    margin: 0,
-    lineHeight: '1.4',
-  },
-  resourceDesc: {
-    fontSize: '0.9rem',
-    color: 'var(--text-muted)',
-    margin: '0 0 1.5rem 0',
-    lineHeight: '1.5',
-    flex: 1,
-  },
-  cardActions: {
+  chapterToggle: {
+    width: '100%',
     display: 'flex',
-    gap: '0.75rem',
-    marginTop: 'auto',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0.5rem',
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'var(--text-sidebar)',
+    cursor: 'pointer',
+    textAlign: 'left',
+    borderRadius: '6px',
+    transition: 'background-color 0.2s',
   },
-  actionBtn: {
-    display: 'inline-flex',
+  chapterTitle: {
+    fontWeight: '600',
+    fontSize: '0.9rem',
+    textTransform: 'none',
+  },
+  chapterItems: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.25rem',
+    paddingLeft: '0.75rem',
+    marginTop: '0.25rem',
+  },
+  articleLink: {
+    display: 'flex',
+    alignItems: 'center',
+    padding: '0.45rem 0.5rem',
+    backgroundColor: 'transparent',
+    border: 'none',
+    fontSize: '0.85rem',
+    borderRadius: '4px',
+    textAlign: 'left',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+    textTransform: 'none',
+  },
+
+  // Main workspace
+  mainContainer: {
+    flex: 1,
+    height: '100%',
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
+  },
+  mobileHeader: {
+    height: '60px',
+    borderBottom: '1px solid var(--border-color)',
+    display: 'none', // Shown only on mobile query
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 1rem',
+    backgroundColor: 'var(--bg-panel)',
+    flexShrink: 0,
+  },
+  hamburgerBtn: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'var(--text-main)',
+    cursor: 'pointer',
+  },
+  mobileBrand: {
+    fontSize: '1.1rem',
+    fontWeight: '700',
+    letterSpacing: '-0.5px',
+    color: 'var(--text-main)',
+  },
+  mobileBackIconBtn: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'var(--text-main)',
+    cursor: 'pointer',
+  },
+  breadcrumbs: {
+    padding: '1rem 2.5rem',
+    display: 'flex',
     alignItems: 'center',
     gap: '0.5rem',
-    padding: '0.6rem 1rem',
-    backgroundColor: 'var(--brand-red)',
-    color: 'white',
-    borderRadius: '8px',
-    textDecoration: 'none',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    transition: 'opacity 0.2s',
+    fontSize: '0.85rem',
+    color: 'var(--text-muted)',
+    borderBottom: '1px solid var(--border-color)',
+    flexShrink: 0,
+    backgroundColor: 'var(--bg-main)',
   },
-  actionBtnAlt: {
-    backgroundColor: 'var(--bg-panel)',
+  breadcrumbLink: {
+    cursor: 'pointer',
+    transition: 'color 0.2s',
+    ':hover': {
+      color: 'var(--brand-red)'
+    }
+  },
+  breadcrumbText: {
+    whiteSpace: 'nowrap',
+    overflow: 'hidden',
+    textOverflow: 'ellipsis',
+    maxWidth: '220px',
+  },
+
+  contentLayout: {
+    flex: 1,
+    display: 'flex',
+    overflow: 'hidden',
+  },
+
+  // Center reading pane
+  readingPane: {
+    flex: 1,
+    height: '100%',
+    overflowY: 'auto',
+    padding: '2.5rem 3.5rem',
+    scrollBehavior: 'smooth',
+  },
+  markdownRender: {
+    maxWidth: '820px',
+    margin: '0 auto',
     color: 'var(--text-main)',
-    border: '1px solid var(--border-color)',
+    lineHeight: '1.7',
+    fontSize: '1.05rem',
+  },
+
+  // Right Table of Contents Sidebar
+  rightSidebar: {
+    width: '240px',
+    height: '100%',
+    borderLeft: '1px solid var(--border-color)',
+    padding: '2.5rem 1.5rem',
+    overflowY: 'auto',
+    flexShrink: 0,
+    backgroundColor: 'var(--bg-main)',
+  },
+  tocTitle: {
+    fontSize: '0.75rem',
+    fontWeight: '800',
+    color: 'var(--text-main)',
+    letterSpacing: '1px',
+    display: 'flex',
+    alignItems: 'center',
+    marginBottom: '1rem',
+  },
+  tocEmpty: {
+    fontSize: '0.8rem',
+    color: 'var(--text-muted)',
+    fontStyle: 'italic',
+  },
+  tocList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '0.5rem',
+    borderLeft: '2px solid var(--border-color)',
+  },
+  tocLink: {
+    display: 'block',
+    textDecoration: 'none',
+    fontSize: '0.85rem',
+    lineHeight: '1.4',
+    transition: 'all 0.2s',
+    borderLeft: '2px solid transparent',
+    marginLeft: '-2px',
+    ':hover': {
+      color: 'var(--brand-red)',
+    }
   }
 };

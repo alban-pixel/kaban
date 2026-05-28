@@ -57,10 +57,12 @@ function MainAppContent() {
   return (
     <div className="app-container">
       {/* Navigation Sidebar Tree */}
-      <Sidebar 
-        activeBoardId={activeBoardId} 
-        onSelectBoard={handleSelectBoard} 
-      />
+      {activeBoardId !== 'learning' && (
+        <Sidebar 
+          activeBoardId={activeBoardId} 
+          onSelectBoard={handleSelectBoard} 
+        />
+      )}
 
       {/* Main Kanban workspace */}
       {activeBoardId === 'admin' ? (
@@ -68,7 +70,7 @@ function MainAppContent() {
       ) : activeBoardId === 'resources' ? (
         <ResourcesPage />
       ) : activeBoardId === 'learning' ? (
-        <LearningPage />
+        <LearningPage onSelectBoard={handleSelectBoard} />
       ) : (
         <KanbanBoard 
           key={`${activeBoardId}-${boardReloadKey}`} 

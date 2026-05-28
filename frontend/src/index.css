@@ -296,3 +296,263 @@ input:focus, select:focus, textarea:focus {
   font-size: 10px;
   font-weight: bold;
 }
+
+/* ==========================================
+   Docusaurus-style Markdown & Admonitions
+   ========================================== */
+
+/* Markdown Layout & Typography */
+.markdown-body {
+  color: var(--text-main);
+  font-family: var(--font-family-sans);
+  line-height: 1.7;
+}
+
+.markdown-body h1 {
+  font-size: 2.2rem;
+  font-weight: 800;
+  margin-top: 0;
+  margin-bottom: 1.5rem;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.5rem;
+  letter-spacing: -0.5px;
+}
+
+.markdown-body h2 {
+  font-size: 1.5rem;
+  font-weight: 700;
+  margin-top: 2.5rem;
+  margin-bottom: 1.25rem;
+  color: var(--text-main);
+  border-bottom: 1px solid var(--border-color);
+  padding-bottom: 0.4rem;
+  letter-spacing: -0.3px;
+}
+
+.markdown-body h3 {
+  font-size: 1.2rem;
+  font-weight: 600;
+  margin-top: 1.75rem;
+  margin-bottom: 0.75rem;
+  color: var(--text-main);
+}
+
+.markdown-body p {
+  margin-bottom: 1.25rem;
+}
+
+.markdown-body ul, .markdown-body ol {
+  margin-bottom: 1.25rem;
+  padding-left: 1.5rem;
+}
+
+.markdown-body li {
+  margin-bottom: 0.5rem;
+}
+
+.markdown-body hr {
+  height: 1px;
+  border: none;
+  background-color: var(--border-color);
+  margin: 2.5rem 0;
+}
+
+.markdown-body blockquote {
+  border-left: 4px solid var(--brand-red);
+  padding-left: 1.25rem;
+  margin: 1.5rem 0;
+  color: var(--text-muted);
+  font-style: italic;
+}
+
+/* Tables */
+.markdown-body table {
+  width: 100%;
+  border-collapse: collapse;
+  margin: 1.5rem 0;
+  font-size: 0.95rem;
+}
+
+.markdown-body th, .markdown-body td {
+  border: 1px solid var(--border-color);
+  padding: 10px 14px;
+  text-align: left;
+}
+
+.markdown-body th {
+  background-color: var(--bg-app);
+  font-weight: 600;
+  color: var(--text-main);
+}
+
+.markdown-body td {
+  color: var(--text-main);
+}
+
+/* Code Blocks */
+.markdown-body pre {
+  background-color: var(--bg-input);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-md);
+  padding: 1.25rem;
+  overflow-x: auto;
+  margin-bottom: 1.5rem;
+  box-shadow: var(--shadow-sm);
+}
+
+.markdown-body code {
+  font-family: 'Courier New', Courier, monospace;
+  font-size: 0.9em;
+  background-color: var(--bg-column);
+  padding: 3px 6px;
+  border-radius: 4px;
+  color: var(--brand-red);
+}
+
+.markdown-body pre code {
+  background-color: transparent;
+  padding: 0;
+  color: var(--text-main);
+  font-size: 0.9rem;
+}
+
+.markdown-body a {
+  color: var(--brand-red);
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 1px dashed transparent;
+  transition: all 0.15s;
+}
+
+.markdown-body a:hover {
+  border-bottom-color: var(--brand-red);
+}
+
+/* Admonitions styling (Docusaurus-style) */
+.admonition-box {
+  border-left: 5px solid #ccc;
+  border-radius: 0 var(--border-radius-md) var(--border-radius-md) 0;
+  padding: 1.25rem;
+  margin: 1.75rem 0;
+  background-color: rgba(0, 0, 0, 0.015);
+  box-shadow: var(--shadow-sm);
+}
+
+.admonition-title {
+  font-weight: 800;
+  font-size: 0.85rem;
+  margin-bottom: 0.6rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  letter-spacing: 0.5px;
+}
+
+.admonition-content {
+  font-size: 0.95rem;
+  line-height: 1.6;
+}
+
+.admonition-content p:last-child {
+  margin-bottom: 0;
+}
+
+.admonition-info {
+  border-left-color: #3b82f6;
+  background-color: rgba(59, 130, 246, 0.06);
+}
+.admonition-info .admonition-title {
+  color: #3b82f6;
+}
+
+.admonition-tip {
+  border-left-color: #10b981;
+  background-color: rgba(16, 185, 129, 0.06);
+}
+.admonition-tip .admonition-title {
+  color: #10b981;
+}
+
+.admonition-warning {
+  border-left-color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.06);
+}
+.admonition-warning .admonition-title {
+  color: #f59e0b;
+}
+
+.admonition-danger {
+  border-left-color: #ef4444;
+  background-color: rgba(239, 68, 68, 0.06);
+}
+.admonition-danger .admonition-title {
+  color: #ef4444;
+}
+
+.admonition-caution {
+  border-left-color: #f59e0b;
+  background-color: rgba(245, 158, 11, 0.06);
+}
+.admonition-caution .admonition-title {
+  color: #f59e0b;
+}
+
+.admonition-note {
+  border-left-color: var(--text-muted);
+  background-color: rgba(0, 0, 0, 0.025);
+}
+.admonition-note .admonition-title {
+  color: var(--text-muted);
+}
+
+[data-theme="dark"] .admonition-box {
+  background-color: rgba(255, 255, 255, 0.015);
+}
+
+/* Error UI Box styling */
+.error-box {
+  padding: 1.5rem;
+  background-color: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  border-radius: var(--border-radius-md);
+  color: #ef4444;
+  font-weight: 500;
+}
+
+/* ==========================================
+   Responsive Overrides for Double Sidebars
+   ========================================== */
+@media (max-width: 1024px) {
+  .toc-sidebar {
+    display: none !important;
+  }
+}
+
+@media (max-width: 768px) {
+  .docs-sidebar {
+    position: fixed !important;
+    left: 0;
+    top: 60px;
+    bottom: 0;
+    height: calc(100vh - 60px) !important;
+    width: 280px !important;
+    z-index: 100 !important;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25) !important;
+  }
+  
+  /* Show mobile header on smaller screen sizes */
+  div[style*="mobileHeader"] {
+    display: flex !important;
+  }
+  
+  /* Breadcrumbs position and padding */
+  div[style*="breadcrumbs"] {
+    padding: 0.8rem 1.5rem !important;
+  }
+  
+  /* Adjust center reading pane spacing on mobile */
+  div[style*="readingPane"] {
+    padding: 1.5rem 1.5rem !important;
+  }
+}
