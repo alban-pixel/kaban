@@ -146,6 +146,11 @@ export default function LearningPage({ onSelectBoard }) {
           f = f.replace(/\\omega/g, 'ω');
           f = f.replace(/\\theta/g, 'θ');
           f = f.replace(/\\eta/g, 'η');
+          f = f.replace(/\\sigma/g, 'σ');
+          f = f.replace(/\\tau/g, 'τ');
+          f = f.replace(/\\pi/g, 'π');
+          f = f.replace(/\\%/g, '%');
+          f = f.replace(/\\operatorname\{([\s\S]*?)\}/g, '$1');
           f = f.replace(/\\mathbf/g, ''); // cleanup any leftover
           return f;
         };
