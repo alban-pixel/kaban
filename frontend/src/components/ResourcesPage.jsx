@@ -17,6 +17,7 @@ export default function ResourcesPage() {
   // FRC Gearbox Matrix State
   const [selectedMechanism, setSelectedMechanism] = useState('drivetrain');
   const [selectedMotor, setSelectedMotor] = useState('kraken');
+  const [currentLimit, setCurrentLimit] = useState(40); // FRC standard current limit in Amps (default 40A)
 
   // Unit Converter State
   const [inchVal, setInchVal] = useState(1);
@@ -138,10 +139,16 @@ export default function ResourcesPage() {
   const currentMotor = motorsDb[selectedMotor];
   const currentMechanism = mechanismsDb[selectedMechanism];
 
+  // FRC Breaker & Software current limit physics
+  // Torque Constant Kt = Stall Torque / Stall Current
+  const kt = currentMotor.stallTorque / currentMotor.stallCurrent;
+  const limitedMotorStallTorque = Math.min(currentMotor.stallTorque, kt * currentLimit);
+
   // Live estimated speed & torque output for selected combo
   const avgReduction = ((currentMechanism.minRatio + currentMechanism.maxRatio) / 2);
   const estOutputRpm = (currentMotor.freeSpeed / avgReduction).toFixed(0);
-  const estStallTorque = (currentMotor.stallTorque * avgReduction).toFixed(1);
+  const estStallTorqueTheoretical = (currentMotor.stallTorque * avgReduction).toFixed(1);
+  const estStallTorqueLimited = (limitedMotorStallTorque * avgReduction).toFixed(1);
 
   // Clearance guide search state
   const [clearanceSearch, setClearanceSearch] = useState('');
@@ -424,6 +431,33 @@ export default function ResourcesPage() {
                       </div>
                     </div>
 
+                    {/* FRC Current Limits / Breaker Config */}
+                    <div style={{ ...styles.formGroup, marginTop: '8px' }}>
+                      <label style={styles.label}>3. Limite d'Intensité logicielle / Disjoncteur PDP-PDH (Amps)</label>
+                      <div style={styles.currentLimitInputRow}>
+                        <input 
+                          type="range"
+                          min="10"
+                          max="120"
+                          step="5"
+                          value={currentLimit}
+                          onChange={(e) => setCurrentLimit(parseInt(e.target.value))}
+                          style={styles.rangeInput}
+                        />
+                        <span style={styles.currentLimitBadge}>{currentLimit} A</span>
+                        <button 
+                          onClick={() => setCurrentLimit(40)} 
+                          style={styles.resetLimitBtn}
+                          title="Réinitialiser à 40A (Standard FRC)"
+                        >
+                          Reset FRC (40A)
+                        </button>
+                      </div>
+                      <span style={styles.currentLimitHelpText}>
+                        * Les robots FRC limitent le courant par programmation (généralement à 40A) pour préserver la batterie et éviter de déclencher les breakers thermiques.
+                      </span>
+                    </div>
+
                     {/* Compatibility Alert & Guidance */}
                     <div style={styles.suitabilityPanel}>
                       <span style={styles.suitabilityHeading}>Compatibilité Mécanique :</span>
@@ -439,22 +473,19 @@ export default function ResourcesPage() {
 
                     {/* FRC Advice panel */}
                     <div style={styles.advicePanel}>
-                      <h5 style={styles.adviceTitle}>Recommandations de Conception FRC :</h5>
-                      <ul style={styles.adviceList}>
-                        <li>Rapport de réduction recommandé : <strong style={{ color: 'var(--brand-red)' }}>{currentMechanism.minRatio}:1 à {currentMechanism.maxRatio}:1</strong></li>
-                        <li>Type de réducteur COTS conseillé : {
-                          selectedMechanism === 'arm' ? 'MAXPlanetary (REV) ou boite planétaire robuste avec étage à chaîne' :
-                          selectedMechanism === 'drivetrain' ? 'Réducteurs Swerve FRC intégrés ou engrenages droits 2 étages robustes' :
-                          selectedMechanism === 'intake' ? 'MAXPlanetary léger / UltraPlanetary (REV) ou transmission par courroie crantée' :
-                          'Réducteurs planétaires ou boite à engrenages droits FRC classique'
-                        }</li>
-                      </ul>
+                      <h5 style={styles.adviceTitle}>Physique du Moteur sous Limite d'Intensité :</h5>
+                      <p style={{ fontSize: '0.775rem', color: 'var(--text-muted)', lineHeight: '1.4' }}>
+                        Constante de couple ($K_t$) de ce moteur : <strong>{kt.toFixed(4)} N.m/A</strong>.<br />
+                        À <strong>{currentLimit} A</strong>, le couple de calage maximal au niveau de l'arbre moteur est bridé à 
+                        <strong style={{ color: 'var(--brand-red)' }}> {limitedMotorStallTorque.toFixed(2)} N.m </strong> 
+                        (au lieu de {currentMotor.stallTorque} N.m en calage théorique libre sous {currentMotor.stallCurrent}A).
+                      </p>
                     </div>
                   </div>
 
                   {/* Estimated output parameters on this mechanism */}
                   <div style={styles.calcResults}>
-                    <h4 style={styles.resultsHeading}>Spécifications Théoriques</h4>
+                    <h4 style={styles.resultsHeading}>Spécifications Réelles ({currentLimit}A)</h4>
                     
                     <div style={styles.resultItem}>
                       <span style={styles.resultLabel}>Moteur sélectionné :</span>
@@ -467,25 +498,30 @@ export default function ResourcesPage() {
                     </div>
 
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Couple de calage (Stall) :</span>
-                      <span style={styles.resultValue}>{currentMotor.stallTorque} N.m</span>
+                      <span style={styles.resultLabel}>Couple Stall Max Théorique :</span>
+                      <span style={{ ...styles.resultValue, textDecoration: 'line-through', opacity: 0.6 }}>{currentMotor.stallTorque} N.m</span>
                     </div>
 
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Puissance de crête (Peak Power) :</span>
-                      <span style={{ ...styles.resultValue, fontWeight: '700' }}>{currentMotor.peakPower} W</span>
+                      <span style={styles.resultLabel}>Couple Stall Réel Bridé ({currentLimit}A) :</span>
+                      <span style={{ ...styles.resultValue, color: 'var(--brand-red)', fontWeight: '700' }}>{limitedMotorStallTorque.toFixed(2)} N.m</span>
                     </div>
 
                     <div style={styles.resultDivider}></div>
 
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Vitesse de sortie estimée ({avgReduction.toFixed(1)}:1) :</span>
+                      <span style={styles.resultLabel}>Vitesse de sortie ({avgReduction.toFixed(1)}:1) :</span>
                       <span style={styles.resultValueHighlight}>{estOutputRpm} RPM</span>
                     </div>
 
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Couple de calage démultiplié :</span>
-                      <span style={{ ...styles.resultValueHighlight, color: '#10b981' }}>{estStallTorque} N.m</span>
+                      <span style={styles.resultLabel}>Couple de calage réels à l'arbre :</span>
+                      <span style={{ ...styles.resultValueHighlight, color: '#10b981' }}>{estStallTorqueLimited} N.m</span>
+                    </div>
+
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>Couple de calage théorique libre :</span>
+                      <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', textDecoration: 'line-through' }}>{estStallTorqueTheoretical} N.m</span>
                     </div>
                   </div>
                 </div>
@@ -834,6 +870,45 @@ const styles = {
     borderRadius: 'var(--border-radius-sm)',
     cursor: 'pointer',
     transition: 'all var(--transition-fast)'
+  },
+  currentLimitInputRow: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '12px',
+    marginTop: '4px'
+  },
+  rangeInput: {
+    flex: 1,
+    height: '6px',
+    backgroundColor: 'var(--border-color)',
+    borderRadius: '9999px',
+    appearance: 'none',
+    outline: 'none',
+    cursor: 'pointer'
+  },
+  currentLimitBadge: {
+    backgroundColor: 'var(--brand-red-alpha-20)',
+    color: 'var(--brand-red)',
+    fontWeight: '700',
+    fontSize: '0.85rem',
+    padding: '4px 10px',
+    borderRadius: '9999px',
+    minWidth: '50px',
+    textAlign: 'center'
+  },
+  resetLimitBtn: {
+    backgroundColor: 'var(--bg-column)',
+    color: 'var(--text-main)',
+    fontSize: '0.75rem',
+    padding: '6px 12px',
+    borderRadius: 'var(--border-radius-sm)',
+    border: '1px solid var(--border-color)',
+    fontWeight: '600'
+  },
+  currentLimitHelpText: {
+    fontSize: '0.725rem',
+    color: 'var(--text-light)',
+    fontStyle: 'italic'
   },
   suitabilityPanel: {
     marginTop: '10px',
