@@ -47,14 +47,14 @@ Un **Vecteur** est une simple flèche imaginaire caractérisée par :
 ```
     Aiguillage de deux forces (Addition Vectorielle) :
     
-            +------------------------->  Vecteur A (Ta poussée vers le Nord)
-            |                       /
-            |                     /
-            |                   /  Vecteur Résultat (Le carton va vers le Nord-Est !)
-            |                 /
-            |               /
-            v             /
-    Vecteur B (Poussée de ton ami vers l'Est)
+                  ^ Vecteur A (Ta poussée vers le Nord)
+                  |
+                  |          /  Vecteur Résultat (Le carton va vers le Nord-Est !)
+                  |        /
+                  |      /
+                  |    /
+                  |  /
+                  +-------------------------> Vecteur B (Poussée de ton ami vers l'Est)
 ```
 
 ### L'Addition de Vecteurs : L'effet coopératif

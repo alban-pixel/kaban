@@ -140,6 +140,11 @@ export default function LearningPage({ onSelectBoard }) {
           // Replace ^{A} or ^A with standard superscript
           f = f.replace(/\^\{([\s\S]*?)\}/g, '<sup>$1</sup>');
           f = f.replace(/\^([a-zA-Z0-9\u00C0-\u017F\-]+)/g, '<sup>$1</sup>');
+          // Replace ^\circ or \circ with degree symbol °
+          f = f.replace(/\^\{?\\circ\}?/g, '°');
+          f = f.replace(/\\circ/g, '°');
+          // Strip backslash from standard mathematical/trigonometric function names
+          f = f.replace(/\\(sin|cos|tan|arcsin|arccos|arctan|csc|sec|cot|sgn|deg|ln|log|exp|lim)/g, '$1');
           // Replace LaTeX specific mathematical operational symbols
           f = f.replace(/\\times/g, ' × ');
           f = f.replace(/\\approx/g, ' ≈ ');
