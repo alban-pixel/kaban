@@ -39,6 +39,14 @@ const chapters = [
     items: [
       { id: "s1_1_maintenance_triage", name: "S1.1 - Maintenance & Triage", file: "s1_1_maintenance_triage.md" }
     ]
+  },
+  {
+    title: "5. Sciences Appliquées FRC",
+    id: "science",
+    items: [
+      { id: "p1_1_frc_physics", name: "P1.1 - Physique de Mouvement", file: "p1_1_frc_physics.md" },
+      { id: "g1_1_frc_materials", name: "G1.1 - Choix des Matériaux", file: "g1_1_frc_materials.md" }
+    ]
   }
 ];
 
@@ -56,7 +64,8 @@ export default function LearningPage({ onSelectBoard }) {
     intro: false,
     mech: false,
     elec: false,
-    triage: false
+    triage: false,
+    science: false
   });
 
   const contentRef = useRef(null);
@@ -84,7 +93,7 @@ export default function LearningPage({ onSelectBoard }) {
         const extracted = extractHeadings(text);
         setHeadings(extracted);
 
-        // Preprocess custom admonitions
+        // Preprocess custom admonitions and flowcharts
         const preprocessed = preprocessMarkdown(text);
         
         // Parse markdown to HTML
@@ -107,12 +116,51 @@ export default function LearningPage({ onSelectBoard }) {
     fetchArticle();
   }, [activeArticle]);
 
-  // Preprocess Docusaurus admonitions :::tip, :::info etc. to HTML blocks
+  // Preprocess Docusaurus admonitions and Mermaid flowcharts
   const preprocessMarkdown = (text) => {
     if (!text) return '';
     let parsed = text;
     
-    // Replace :::type and :::
+    // 1. Process Mermaid graph LR
+    parsed = parsed.replace(/```mermaid\s*([\s\S]*?)\s*```/g, (match, code) => {
+      if (code.includes('graph LR')) {
+        const nodes = [];
+        const lines = code.split('\n');
+        for (let line of lines) {
+          const nodeMatch = line.match(/([A-Z])\[(.*?)\]/);
+          if (nodeMatch) {
+            const id = nodeMatch[1];
+            const content = nodeMatch[2];
+            nodes.push({ id, content });
+          }
+        }
+
+        let flowchartHtml = '<div class="flowchart-horizontal">';
+        nodes.forEach((node, index) => {
+          flowchartHtml += `
+            <div class="flowchart-step animate-fade">
+              <div class="step-badge">Phase ${index + 1}</div>
+              <div class="step-text">${node.content}</div>
+            </div>
+          `;
+          if (index < nodes.length - 1) {
+            flowchartHtml += `
+              <div class="flowchart-arrow">
+                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+                  <line x1="5" y1="12" x2="19" y2="12"></line>
+                  <polyline points="12 5 19 12 12 19"></polyline>
+                </svg>
+              </div>
+            `;
+          }
+        });
+        flowchartHtml += '</div>';
+        return flowchartHtml;
+      }
+      return match;
+    });
+
+    // 2. Preprocess Docusaurus style :::type to HTML tags
     parsed = parsed.replace(/:::(tip|info|warning|danger|caution|note)(?:\s+(.*))?/g, (match, type, title) => {
       const defaultTitles = {
         tip: "CONSEIL",
@@ -285,12 +333,12 @@ export default function LearningPage({ onSelectBoard }) {
         </div>
 
         {/* Breadcrumbs Navigation */}
-        <div style={styles.breadcrumbs}>
-          <span style={styles.breadcrumbLink} onClick={handleBackToDashboard}>Tableau de bord</span>
-          <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
-          <span style={styles.breadcrumbText}>{activeChapter ? activeChapter.title : ''}</span>
-          <ChevronRight size={14} style={{ color: 'var(--text-muted)' }} />
-          <span style={{ ...styles.breadcrumbText, color: 'var(--text-main)', fontWeight: '500' }}>{activeArticle.name}</span>
+        <div style={styles.breadcrumbs} className="breadcrumbs-bar">
+          <span style={styles.breadcrumbLink} onClick={handleBackToDashboard} className="breadcrumb-link">Tableau de bord</span>
+          <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <span style={styles.breadcrumbText} className="breadcrumb-text">{activeChapter ? activeChapter.title : ''}</span>
+          <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+          <span style={{ ...styles.breadcrumbText, color: 'var(--text-main)', fontWeight: '500' }} className="breadcrumb-text">{activeArticle.name}</span>
         </div>
 
         {/* Content Wrapper */}
@@ -500,9 +548,6 @@ const styles = {
   breadcrumbLink: {
     cursor: 'pointer',
     transition: 'color 0.2s',
-    ':hover': {
-      color: 'var(--brand-red)'
-    }
   },
   breadcrumbText: {
     whiteSpace: 'nowrap',
@@ -571,8 +616,5 @@ const styles = {
     transition: 'all 0.2s',
     borderLeft: '2px solid transparent',
     marginLeft: '-2px',
-    ':hover': {
-      color: 'var(--brand-red)',
-    }
   }
 };

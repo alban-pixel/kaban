@@ -556,3 +556,127 @@ input:focus, select:focus, textarea:focus {
     padding: 1.5rem 1.5rem !important;
   }
 }
+
+/* ==========================================
+   Interactive Flowcharts & Breadcrumb Wraps
+   ========================================== */
+
+/* Flowchart main container */
+.flowchart-horizontal {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 1rem;
+  margin: 2rem 0;
+  padding: 1.5rem;
+  background-color: var(--bg-card);
+  border: 1px solid var(--border-color);
+  border-radius: var(--border-radius-lg);
+  overflow-x: auto;
+  box-shadow: var(--shadow-sm);
+}
+
+/* Individual phase step nodes */
+.flowchart-step {
+  flex: 1;
+  min-width: 170px;
+  background-color: var(--bg-app);
+  border: 2px solid var(--border-color);
+  border-left: 5px solid var(--brand-red);
+  padding: 1rem 0.8rem;
+  border-radius: var(--border-radius-md);
+  text-align: center;
+  transition: all var(--transition-fast);
+  box-shadow: var(--shadow-sm);
+}
+
+.flowchart-step:hover {
+  transform: translateY(-2px);
+  border-color: var(--brand-red);
+  box-shadow: var(--shadow-md);
+}
+
+.step-badge {
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: var(--brand-red);
+  margin-bottom: 0.4rem;
+  text-transform: uppercase;
+  letter-spacing: 0.8px;
+}
+
+.step-text {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: var(--text-main);
+  line-height: 1.4;
+}
+
+/* Direction arrow separators */
+.flowchart-arrow {
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  animation: pulseArrow 2s infinite;
+}
+
+@keyframes pulseArrow {
+  0%, 100% { transform: translateX(0); opacity: 0.7; }
+  50% { transform: translateX(3px); opacity: 1; }
+}
+
+/* Responsive Breadcrumbs Wraps & Truncation fixes */
+.breadcrumbs-bar {
+  flex-wrap: wrap !important;
+  gap: 0.4rem 0.6rem !important;
+  padding: 0.8rem 2.5rem !important;
+}
+
+.breadcrumb-link {
+  color: var(--text-muted) !important;
+  cursor: pointer;
+  font-weight: 500;
+  border-bottom: 1px dashed transparent;
+  transition: all var(--transition-fast);
+  text-decoration: none !important;
+}
+
+.breadcrumb-link:hover {
+  color: var(--brand-red) !important;
+  border-bottom-color: var(--brand-red);
+}
+
+.breadcrumb-text {
+  color: var(--text-muted) !important;
+  white-space: normal !important;
+  overflow: visible !important;
+  text-overflow: clip !important;
+  max-width: none !important;
+}
+
+/* Responsive flowcharts for small screens */
+@media (max-width: 768px) {
+  .flowchart-horizontal {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 1.25rem;
+    padding: 1.25rem;
+  }
+  
+  .flowchart-arrow {
+    transform: rotate(90deg) !important;
+    margin: -0.25rem 0;
+    animation: pulseArrowVertical 2s infinite;
+  }
+  
+  .flowchart-step {
+    min-width: unset;
+  }
+  
+  @keyframes pulseArrowVertical {
+    0%, 100% { transform: rotate(90deg) translateY(0); opacity: 0.7; }
+    50% { transform: rotate(90deg) translateY(3px); opacity: 1; }
+  }
+}
