@@ -40,13 +40,14 @@ export default function ResourcesPage() {
   const drivenRpm = gearRatio > 0 ? (motorRpm / gearRatio).toFixed(1) : 0;
   const drivenTorque = gearRatio > 0 ? (motorTorque * gearRatio).toFixed(2) : 0;
 
-  // Motors Database FRC
+  // Motors Database FRC (With real-world linear torque constants Kt verified by CTR & REV)
   const motorsDb = {
     neo: {
       name: 'REV NEO Brushless',
       freeSpeed: 5676, // RPM
-      stallTorque: 3.36, // N.m
+      stallTorque: 3.36, // N.m (Theoretical stall)
       stallCurrent: 105, // A
+      kt: 0.075, // N.m/A (Real-world linear torque constant)
       peakPower: 406, // W
       notes: 'Moteur polyvalent FRC par excellence. Fiable, bon rapport couple/vitesse.',
       color: '#ffa500'
@@ -54,8 +55,9 @@ export default function ResourcesPage() {
     neo550: {
       name: 'REV NEO 550',
       freeSpeed: 11000, // RPM
-      stallTorque: 0.97, // N.m
+      stallTorque: 0.97, // N.m (Theoretical stall)
       stallCurrent: 100, // A
+      kt: 0.022, // N.m/A (Real-world linear torque constant)
       peakPower: 278, // W
       notes: 'Ultra compact et léger. Vitesse très élevée mais chauffe rapidement sous forte charge. Perte de couple rapide à basse vitesse.',
       color: '#38bdf8'
@@ -63,8 +65,9 @@ export default function ResourcesPage() {
     kraken: {
       name: 'WCP Kraken X60',
       freeSpeed: 6000, // RPM
-      stallTorque: 9.37, // N.m
-      stallCurrent: 366, // A
+      stallTorque: 9.37, // N.m (Peak stall under FOC)
+      stallCurrent: 366, // A (Maximum phase current)
+      kt: 0.095, // N.m/A (Real-world linear torque constant, yielding ~3.8 Nm at 40A)
       peakPower: 1102, // W
       notes: 'Le monstre de puissance FRC actuel. Refroidissement intégré, couple massif, rendement exceptionnel.',
       color: '#cf2737'
@@ -140,8 +143,8 @@ export default function ResourcesPage() {
   const currentMechanism = mechanismsDb[selectedMechanism];
 
   // FRC Breaker & Software current limit physics
-  // Torque Constant Kt = Stall Torque / Stall Current
-  const kt = currentMotor.stallTorque / currentMotor.stallCurrent;
+  // Use real linear Torque Constant (Kt) from motors database
+  const kt = currentMotor.kt;
   const limitedMotorStallTorque = Math.min(currentMotor.stallTorque, kt * currentLimit);
 
   // Live estimated speed & torque output for selected combo
