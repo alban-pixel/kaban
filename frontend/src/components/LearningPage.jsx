@@ -40,18 +40,38 @@ const chapters = [
     ]
   },
   {
-    title: "4. Fiabilité & Stands",
-    id: "triage",
+    title: "4. Programmation & Vision",
+    id: "software",
     items: [
-      { id: "s1_1_maintenance_triage", name: "S1.1 - Maintenance & Triage", file: "s1_1_maintenance_triage.md" }
+      { id: "s2_1_command_based", name: "S2.1 - Asynchronisme & Commands", file: "s2_1_command_based.md", advanced: true },
+      { id: "s2_2_pid_feedforward", name: "S2.2 - Boucles PID & Feedforward", file: "s2_2_pid_feedforward.md", advanced: true },
+      { id: "s2_3_odometry_vision", name: "S2.3 - Vision AprilTags & Kalman", file: "s2_3_odometry_vision.md", advanced: true }
     ]
   },
   {
-    title: "5. Sciences Appliquées FRC",
+    title: "5. Fiabilité & Stands",
+    id: "triage",
+    items: [
+      { id: "s1_1_maintenance_triage", name: "S1.1 - Maintenance & Triage", file: "s1_1_maintenance_triage.md" },
+      { id: "t2_1_pit_triage", name: "T2.1 - Processus Triage en Stands", file: "t2_1_pit_triage.md", advanced: true },
+      { id: "t2_2_log_analysis", name: "T2.2 - Analyse Logs post-match", file: "t2_2_log_analysis.md", advanced: true }
+    ]
+  },
+  {
+    title: "6. Sciences Appliquées FRC",
     id: "science",
     items: [
       { id: "p1_1_frc_physics", name: "P1.1 - Physique de Mouvement", file: "p1_1_frc_physics.md" },
       { id: "g1_1_frc_materials", name: "G1.1 - Choix des Matériaux", file: "g1_1_frc_materials.md" }
+    ]
+  },
+  {
+    title: "7. Gestion, Sponsoring & Médias",
+    id: "management",
+    items: [
+      { id: "b2_1_agile_management", name: "B2.1 - Gestion Projet & Kanban", file: "b2_1_agile_management.md", advanced: true },
+      { id: "b2_2_sponsoring_negotiation", name: "B2.2 - Sponsoring & Business", file: "b2_2_sponsoring_negotiation.md", advanced: true },
+      { id: "b2_3_branding_impact", name: "B2.3 - Branding & Impact Award", file: "b2_3_branding_impact.md", advanced: true }
     ]
   }
 ];
@@ -69,8 +89,10 @@ export default function LearningPage({ onSelectBoard }) {
     intro: false,
     mech: false,
     elec: false,
+    software: false,
     triage: false,
-    science: false
+    science: false,
+    management: false
   });
 
   const contentRef = useRef(null);
