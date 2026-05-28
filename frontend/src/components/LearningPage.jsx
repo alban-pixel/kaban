@@ -62,6 +62,7 @@ const chapters = [
     title: "6. Sciences Appliquées FRC",
     id: "science",
     items: [
+      { id: "p1_0_math_physics_basics", name: "P1.0 - Les Bases : Maths & Physique", file: "p1_0_math_physics_basics.md" },
       { id: "p1_1_frc_physics", name: "P1.1 - Physique de Mouvement", file: "p1_1_frc_physics.md" },
       { id: "g1_1_frc_materials", name: "G1.1 - Choix des Matériaux", file: "g1_1_frc_materials.md" }
     ]
