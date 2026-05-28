@@ -22,9 +22,9 @@ const chapters = [
       { id: "m1_1_cad_onshape", name: "M1.1 - CAO avec Onshape", file: "m1_1_cad_onshape.md" },
       { id: "m1_2_gears_motors", name: "M1.2 - Engrenages & Moteurs", file: "m1_2_gears_motors.md" },
       { id: "m1_3_mechanisms", name: "M1.3 - Conception de Mécanismes", file: "m1_3_mechanisms.md" },
-      { id: "m2_1_cad_onshape_advanced", name: "M2.1 - CAO Descendante Onshape", file: "m2_1_cad_onshape_advanced.md" },
-      { id: "m2_2_tolerances_machining", name: "M2.2 - Tolérances & Usinage", file: "m2_2_tolerances_machining.md" },
-      { id: "m2_3_heavy_gearboxes", name: "M2.3 - Réducteurs Lourds & Boîtes", file: "m2_3_heavy_gearboxes.md" }
+      { id: "m2_1_cad_onshape_advanced", name: "M2.1 - CAO Descendante Onshape", file: "m2_1_cad_onshape_advanced.md", advanced: true },
+      { id: "m2_2_tolerances_machining", name: "M2.2 - Tolérances & Usinage", file: "m2_2_tolerances_machining.md", advanced: true },
+      { id: "m2_3_heavy_gearboxes", name: "M2.3 - Réducteurs Lourds & Boîtes", file: "m2_3_heavy_gearboxes.md", advanced: true }
     ]
   },
   {
@@ -33,7 +33,10 @@ const chapters = [
     items: [
       { id: "h1_1_control_system", name: "H1.1 - Le Système de Contrôle", file: "h1_1_control_system.md" },
       { id: "h1_2_wiring_practices", name: "H1.2 - Bonnes Pratiques de Câblage", file: "h1_2_wiring_practices.md" },
-      { id: "h1_3_3d_printing", name: "H1.3 - Impression 3D pour la FRC", file: "h1_3_3d_printing.md" }
+      { id: "h1_3_3d_printing", name: "H1.3 - Impression 3D pour la FRC", file: "h1_3_3d_printing.md" },
+      { id: "h2_1_can_fd_oscilloscope", name: "H2.1 - Communication CAN FD", file: "h2_1_can_fd_oscilloscope.md", advanced: true },
+      { id: "h2_2_sensors_feedback", name: "H2.2 - Capteurs & Asservissements", file: "h2_2_sensors_feedback.md", advanced: true },
+      { id: "h2_3_power_brownouts", name: "H2.3 - Diagnostic & Brownouts", file: "h2_3_power_brownouts.md", advanced: true }
     ]
   },
   {
@@ -350,7 +353,12 @@ export default function LearningPage({ onSelectBoard }) {
                             }}
                           >
                             <FileText size={14} style={{ marginRight: '8px', flexShrink: 0 }} />
-                            <span style={{ textTransform: 'none' }}>{item.name}</span>
+                            <span style={{ textTransform: 'none', display: 'flex', alignItems: 'center', flexWrap: 'wrap' }}>
+                              {item.name}
+                              {item.advanced && (
+                                <span style={styles.advancedBadge}>AVANCÉ</span>
+                              )}
+                            </span>
                           </button>
                         );
                       })}
@@ -589,6 +597,18 @@ const styles = {
     cursor: 'pointer',
     transition: 'all 0.2s',
     textTransform: 'none',
+  },
+  advancedBadge: {
+    fontSize: '0.55rem',
+    padding: '1px 4px',
+    borderRadius: '3px',
+    backgroundColor: 'var(--brand-red)',
+    color: 'white',
+    fontWeight: '800',
+    marginLeft: '6px',
+    letterSpacing: '0.3px',
+    display: 'inline-block',
+    lineHeight: '1.2',
   },
 
   // Main reading wrapper
