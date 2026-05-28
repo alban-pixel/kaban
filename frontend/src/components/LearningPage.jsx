@@ -10,6 +10,7 @@ const chapters = [
     title: "1. Introduction à la FRC",
     id: "intro",
     items: [
+      { id: "f1_0_safety_rules", name: "F1.0 - Charte de Sécurité", file: "f1_0_safety_rules.md" },
       { id: "f1_1_what_is_frc", name: "F1.1 - Qu'est-ce que la FRC ?", file: "f1_1_what_is_frc.md" },
       { id: "f1_2_team_roles", name: "F1.2 - Les Rôles dans l'Équipe", file: "f1_2_team_roles.md" },
       { id: "d1_1_robot_anatomy", name: "D1.1 - Anatomie d'un Robot FRC", file: "d1_1_robot_anatomy.md" }
@@ -78,7 +79,7 @@ const chapters = [
 
 export default function LearningPage({ onSelectBoard }) {
   const [activeChapterId, setActiveChapterId] = useState('intro');
-  const [activeArticleId, setActiveArticleId] = useState('f1_1_what_is_frc');
+  const [activeArticleId, setActiveArticleId] = useState('f1_0_safety_rules');
   const [activeArticle, setActiveArticle] = useState(chapters[0].items[0]);
   const [htmlContent, setHtmlContent] = useState('');
   const [headings, setHeadings] = useState([]);
