@@ -155,7 +155,7 @@ export default function LearningPage({ onSelectBoard }) {
           const index = mathBlocks.length;
           const compiledMath = `<div class="math-equation">${translateMath(formula)}</div>`;
           mathBlocks.push(compiledMath);
-          return `___MATH_PLACEHOLDER_${index}___`;
+          return `%%MATH_PLACEHOLDER_${index}%%`;
         });
 
         // 2. Extract and compile inline math $ ... $
@@ -163,7 +163,7 @@ export default function LearningPage({ onSelectBoard }) {
           const index = mathBlocks.length;
           const compiledMath = `<span class="math-inline">${translateMath(formula)}</span>`;
           mathBlocks.push(compiledMath);
-          return `___MATH_PLACEHOLDER_${index}___`;
+          return `%%MATH_PLACEHOLDER_${index}%%`;
         });
 
         // Pass 1: Parse standard markdown to HTML
@@ -174,11 +174,11 @@ export default function LearningPage({ onSelectBoard }) {
 
         // Restore math placeholders
         mathBlocks.forEach((compiledMath, index) => {
-          const pWrappedPlaceholder = `<p>___MATH_PLACEHOLDER_${index}___</p>`;
+          const pWrappedPlaceholder = `<p>%%MATH_PLACEHOLDER_${index}%%</p>`;
           if (compiledHtml.includes(pWrappedPlaceholder)) {
             compiledHtml = compiledHtml.replace(pWrappedPlaceholder, compiledMath);
           } else {
-            compiledHtml = compiledHtml.replace(`___MATH_PLACEHOLDER_${index}___`, compiledMath);
+            compiledHtml = compiledHtml.split(`%%MATH_PLACEHOLDER_${index}%%`).join(compiledMath);
           }
         });
         
