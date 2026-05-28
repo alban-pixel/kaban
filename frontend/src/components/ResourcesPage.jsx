@@ -17,7 +17,7 @@ export default function ResourcesPage() {
   // FRC Gearbox Matrix State
   const [selectedMechanism, setSelectedMechanism] = useState('drivetrain');
   const [selectedMotor, setSelectedMotor] = useState('kraken');
-  const [currentLimit, setCurrentLimit] = useState(40); // FRC standard current limit in Amps (default 40A)
+  const currentLimit = 40; // FRC standard current limit in Amps (hardcoded 40A)
 
   // Unit Converter State
   const [inchVal, setInchVal] = useState(1);
@@ -434,32 +434,7 @@ export default function ResourcesPage() {
                       </div>
                     </div>
 
-                    {/* FRC Current Limits / Breaker Config */}
-                    <div style={{ ...styles.formGroup, marginTop: '8px' }}>
-                      <label style={styles.label}>3. Limite d'Intensité logicielle / Disjoncteur PDP-PDH (Amps)</label>
-                      <div style={styles.currentLimitInputRow}>
-                        <input 
-                          type="range"
-                          min="10"
-                          max="120"
-                          step="5"
-                          value={currentLimit}
-                          onChange={(e) => setCurrentLimit(parseInt(e.target.value))}
-                          style={styles.rangeInput}
-                        />
-                        <span style={styles.currentLimitBadge}>{currentLimit} A</span>
-                        <button 
-                          onClick={() => setCurrentLimit(40)} 
-                          style={styles.resetLimitBtn}
-                          title="Réinitialiser à 40A (Standard FRC)"
-                        >
-                          Reset FRC (40A)
-                        </button>
-                      </div>
-                      <span style={styles.currentLimitHelpText}>
-                        * Les robots FRC limitent le courant par programmation (généralement à 40A) pour préserver la batterie et éviter de déclencher les breakers thermiques.
-                      </span>
-                    </div>
+
 
                     {/* Compatibility Alert & Guidance */}
                     <div style={styles.suitabilityPanel}>
