@@ -702,3 +702,79 @@ input:focus, select:focus, textarea:focus {
     50% { transform: rotate(90deg) translateY(3px); opacity: 1; }
   }
 }
+
+/* ==========================================
+   LaTeX Math Formulas & Equations Rendering
+   ========================================== */
+
+/* Block equations $$ ... $$ */
+.math-equation {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  margin: 1.75rem 0;
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  font-size: 1.15rem;
+  color: var(--text-main);
+  background-color: var(--bg-app);
+  border: 1px dashed var(--border-color);
+  padding: 1.25rem;
+  border-radius: var(--border-radius-md);
+  box-shadow: var(--shadow-sm);
+  overflow-x: auto;
+}
+
+/* Inline equations $ ... $ */
+.math-inline {
+  font-family: var(--font-family-sans);
+  font-weight: 700;
+  color: var(--brand-red);
+  background-color: var(--bg-column);
+  padding: 1px 4px;
+  border-radius: 4px;
+  white-space: nowrap;
+}
+
+/* Fractions structure */
+.math-fraction {
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  vertical-align: middle;
+  padding: 0 0.5rem;
+  font-size: 1rem;
+}
+
+.math-numerator {
+  border-bottom: 1.5px solid var(--text-main);
+  padding-bottom: 2px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+.math-denominator {
+  padding-top: 2px;
+  width: 100%;
+  text-align: center;
+  font-size: 0.9em;
+}
+
+/* Subscripts and superscripts fixes */
+sub, sup {
+  font-size: 75%;
+  line-height: 0;
+  position: relative;
+  vertical-align: baseline;
+}
+
+sub {
+  bottom: -0.25em;
+}
+
+sup {
+  top: -0.5em;
+}

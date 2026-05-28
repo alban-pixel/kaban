@@ -95,7 +95,7 @@ export default function LearningPage({ onSelectBoard }) {
         // Pass 1: Parse standard markdown to HTML
         const parsedHtml = marked.parse(text);
 
-        // Pass 2: Run custom HTML regex expansions (Flowchart and Admonitions)
+        // Pass 2: Run custom HTML regex expansions (Math, Flowchart and Admonitions)
         const compiledHtml = compileCustomElements(parsedHtml);
         
         // Inject IDs into HTML headings for scrollspy links
@@ -120,7 +120,10 @@ export default function LearningPage({ onSelectBoard }) {
     if (!html) return '';
     let compiled = html;
 
-    // 1. Swap <pre><code class="language-mermaid"> with custom progress flowchart
+    // 1. Process LaTeX Math ($ ... $ and $$ ... $$)
+    compiled = compileMath(compiled);
+
+    // 2. Swap <pre><code class="language-mermaid"> with custom progress flowchart
     compiled = compiled.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, (match, code) => {
       if (code.includes('graph LR')) {
         const nodes = [];
@@ -148,7 +151,7 @@ export default function LearningPage({ onSelectBoard }) {
       return match;
     });
 
-    // 2. Swap <p>:::type</p> ... <p>:::</p> with styled admonitions
+    // 3. Swap <p>:::type</p> ... <p>:::</p> with styled admonitions
     // Using ungreedy matches to safely bind pairs and allow markdown paragraph markup inside the block
     compiled = compiled.replace(/<p>:::(tip|info|warning|danger|caution|note)(?:\s+(.*?))?<\/p>([\s\S]*?)<p>:::<\/p>/g, (match, type, title, content) => {
       const defaultTitles = {
@@ -170,6 +173,47 @@ export default function LearningPage({ onSelectBoard }) {
       const dispTitle = title || defaultTitles[type] || type.toUpperCase();
       const emoji = emojis[type] || "📝";
       return `<div class="admonition-box admonition-${type}"><div class="admonition-title">${emoji} ${dispTitle}</div><div class="admonition-content">${content}</div></div>`;
+    });
+
+    return compiled;
+  };
+
+  // Compile standard LaTeX math notations into clean HTML structures
+  const compileMath = (html) => {
+    if (!html) return '';
+    let compiled = html;
+
+    const translateMath = (formula) => {
+      let f = formula;
+      // Replace \frac{A}{B} with styled fraction markup
+      f = f.replace(/\\frac\{([\s\S]*?)\}\{([\s\S]*?)\}/g, '<div class="math-fraction"><span class="math-numerator">$1</span><span class="math-denominator">$2</span></div>');
+      // Replace \text{A} with plain text
+      f = f.replace(/\\text\{([\s\S]*?)\}/g, '$1');
+      // Replace _{A} or _A with standard subscript
+      f = f.replace(/_\{([\s\S]*?)\}/g, '<sub>$1</sub>');
+      f = f.replace(/_([a-zA-Z0-9\u00C0-\u017F]+)/g, '<sub>$1</sub>'); // includes French accents
+      // Replace ^{A} or ^A with standard superscript
+      f = f.replace(/\^\{([\s\S]*?)\}/g, '<sup>$1</sup>');
+      f = f.replace(/\^([a-zA-Z0-9\u00C0-\u017F]+)/g, '<sup>$1</sup>');
+      // Replace LaTeX specific mathematical operational symbols
+      f = f.replace(/\\times/g, ' × ');
+      f = f.replace(/\\approx/g, ' ≈ ');
+      f = f.replace(/\\cdot/g, ' · ');
+      f = f.replace(/\\mu/g, 'μ');
+      f = f.replace(/\\omega/g, 'ω');
+      f = f.replace(/\\theta/g, 'θ');
+      f = f.replace(/\\eta/g, 'η');
+      return f;
+    };
+
+    // Replace block math $$ ... $$
+    compiled = compiled.replace(/<p>\$\$([\s\S]*?)\$\$<\/p>/g, (match, formula) => {
+      return `<div class="math-equation">${translateMath(formula)}</div>`;
+    });
+
+    // Replace inline math $ ... $
+    compiled = compiled.replace(/\$([\s\S]*?)\$/g, (match, formula) => {
+      return `<span class="math-inline">${translateMath(formula)}</span>`;
     });
 
     return compiled;
