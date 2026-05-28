@@ -523,6 +523,16 @@ input:focus, select:focus, textarea:focus {
 /* ==========================================
    Responsive Overrides for Double Sidebars
    ========================================== */
+
+/* By default on desktop, sidebar is always static, hamburger is hidden */
+.docs-sidebar {
+  transform: none !important;
+}
+
+.mobile-hamburger {
+  display: none !important;
+}
+
 @media (max-width: 1024px) {
   .toc-sidebar {
     display: none !important;
@@ -539,11 +549,23 @@ input:focus, select:focus, textarea:focus {
     width: 280px !important;
     z-index: 100 !important;
     box-shadow: 10px 0 30px rgba(0, 0, 0, 0.25) !important;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
   }
   
-  /* Show mobile header on smaller screen sizes */
-  div[style*="mobileHeader"] {
-    display: flex !important;
+  .docs-sidebar-closed {
+    transform: translateX(-100%) !important;
+  }
+  
+  .docs-sidebar-open {
+    transform: translateX(0) !important;
+  }
+
+  .mobile-hamburger {
+    display: block !important;
+  }
+
+  .exit-btn-desktop {
+    display: none !important;
   }
   
   /* Breadcrumbs position and padding */

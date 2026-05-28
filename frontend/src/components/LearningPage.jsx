@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { marked } from 'marked';
 import { 
   BookOpen, ChevronRight, ChevronDown, Menu, X, ArrowLeft,
-  List, PlayCircle, FileText, Compass, ExternalLink, Presentation
+  List, FileText, ExternalLink
 } from 'lucide-react';
 
 const chapters = [
@@ -54,7 +54,6 @@ export default function LearningPage({ onSelectBoard }) {
   const [activeChapterId, setActiveChapterId] = useState('intro');
   const [activeArticleId, setActiveArticleId] = useState('f1_1_what_is_frc');
   const [activeArticle, setActiveArticle] = useState(chapters[0].items[0]);
-  const [markdownContent, setMarkdownContent] = useState('');
   const [htmlContent, setHtmlContent] = useState('');
   const [headings, setHeadings] = useState([]);
   
@@ -87,20 +86,20 @@ export default function LearningPage({ onSelectBoard }) {
           throw new Error("Impossible de charger le fichier de cours.");
         }
         const text = await response.text();
-        setMarkdownContent(text);
         
-        // Extract headings for ToC
+        // Extract headings for ToC directly from markdown
         const extracted = extractHeadings(text);
         setHeadings(extracted);
 
-        // Preprocess custom admonitions and flowcharts
-        const preprocessed = preprocessMarkdown(text);
+        // --- Structured Two-Pass HTML Compiler ---
+        // Pass 1: Parse standard markdown to HTML
+        const parsedHtml = marked.parse(text);
+
+        // Pass 2: Run custom HTML regex expansions (Flowchart and Admonitions)
+        const compiledHtml = compileCustomElements(parsedHtml);
         
-        // Parse markdown to HTML
-        const parsedHtml = marked.parse(preprocessed);
-        
-        // Inject IDs into parsed HTML headings for anchor scrolls
-        const finalHtml = injectHeadingIds(parsedHtml);
+        // Inject IDs into HTML headings for scrollspy links
+        const finalHtml = injectHeadingIds(compiledHtml);
         setHtmlContent(finalHtml);
 
         // Scroll main content pane to top when article changes
@@ -116,13 +115,13 @@ export default function LearningPage({ onSelectBoard }) {
     fetchArticle();
   }, [activeArticle]);
 
-  // Preprocess Docusaurus admonitions and Mermaid flowcharts
-  const preprocessMarkdown = (text) => {
-    if (!text) return '';
-    let parsed = text;
-    
-    // 1. Process Mermaid graph LR
-    parsed = parsed.replace(/```mermaid\s*([\s\S]*?)\s*```/g, (match, code) => {
+  // Two-pass post-renderer: safe replacements on generated HTML string to prevent unbalanced unclosed div tags
+  const compileCustomElements = (html) => {
+    if (!html) return '';
+    let compiled = html;
+
+    // 1. Swap <pre><code class="language-mermaid"> with custom progress flowchart
+    compiled = compiled.replace(/<pre><code class="language-mermaid">([\s\S]*?)<\/code><\/pre>/g, (match, code) => {
       if (code.includes('graph LR')) {
         const nodes = [];
         const lines = code.split('\n');
@@ -135,23 +134,12 @@ export default function LearningPage({ onSelectBoard }) {
           }
         }
 
+        // Clean, single-line horizontal flowchart (prevents marked splits)
         let flowchartHtml = '<div class="flowchart-horizontal">';
         nodes.forEach((node, index) => {
-          flowchartHtml += `
-            <div class="flowchart-step animate-fade">
-              <div class="step-badge">Phase ${index + 1}</div>
-              <div class="step-text">${node.content}</div>
-            </div>
-          `;
+          flowchartHtml += `<div class="flowchart-step"><div class="step-badge">Phase ${index + 1}</div><div class="step-text">${node.content}</div></div>`;
           if (index < nodes.length - 1) {
-            flowchartHtml += `
-              <div class="flowchart-arrow">
-                <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
-                  <line x1="5" y1="12" x2="19" y2="12"></line>
-                  <polyline points="12 5 19 12 12 19"></polyline>
-                </svg>
-              </div>
-            `;
+            flowchartHtml += `<div class="flowchart-arrow"><svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="5" y1="12" x2="19" y2="12"></line><polyline points="12 5 19 12 12 19"></polyline></svg></div>`;
           }
         });
         flowchartHtml += '</div>';
@@ -160,8 +148,9 @@ export default function LearningPage({ onSelectBoard }) {
       return match;
     });
 
-    // 2. Preprocess Docusaurus style :::type to HTML tags
-    parsed = parsed.replace(/:::(tip|info|warning|danger|caution|note)(?:\s+(.*))?/g, (match, type, title) => {
+    // 2. Swap <p>:::type</p> ... <p>:::</p> with styled admonitions
+    // Using ungreedy matches to safely bind pairs and allow markdown paragraph markup inside the block
+    compiled = compiled.replace(/<p>:::(tip|info|warning|danger|caution|note)(?:\s+(.*?))?<\/p>([\s\S]*?)<p>:::<\/p>/g, (match, type, title, content) => {
       const defaultTitles = {
         tip: "CONSEIL",
         info: "INFORMATION",
@@ -180,13 +169,10 @@ export default function LearningPage({ onSelectBoard }) {
       };
       const dispTitle = title || defaultTitles[type] || type.toUpperCase();
       const emoji = emojis[type] || "📝";
-      return `<div class="admonition-box admonition-${type}"><div class="admonition-title">${emoji} ${dispTitle}</div><div class="admonition-content">`;
+      return `<div class="admonition-box admonition-${type}"><div class="admonition-title">${emoji} ${dispTitle}</div><div class="admonition-content">${content}</div></div>`;
     });
-    
-    // Replace closing :::
-    parsed = parsed.replace(/:::/g, '</div></div>');
-    
-    return parsed;
+
+    return compiled;
   };
 
   // Inject IDs to H2 and H3 for Anchor link scrolling
@@ -249,147 +235,149 @@ export default function LearningPage({ onSelectBoard }) {
   return (
     <div style={styles.appContainer}>
       
-      {/* 1. DOCUMENTATION SIDEBAR (LEFT) */}
-      <div style={{
-        ...styles.leftSidebar,
-        transform: leftSidebarOpen ? 'translateX(0)' : 'translateX(-100%)',
-        opacity: 1,
-      }} className="docs-sidebar">
-        
-        {/* Sidebar Header Escape */}
-        <div style={styles.sidebarHeader}>
-          <button onClick={handleBackToDashboard} style={styles.backBtn}>
-            <ArrowLeft size={16} />
-            <span>Vers Kanban</span>
-          </button>
-        </div>
-
-        {/* Navigation list */}
-        <div style={styles.sidebarNav}>
-          <div style={styles.navSectionTitle}>CURRICULUM ROBOTIQUE</div>
-          
-          {chapters.map((chapter) => {
-            const isCollapsed = collapsedChapters[chapter.id];
-            return (
-              <div key={chapter.id} style={styles.chapterGroup}>
-                <button 
-                  onClick={() => toggleChapter(chapter.id)} 
-                  style={styles.chapterToggle}
-                >
-                  <span style={styles.chapterTitle}>{chapter.title}</span>
-                  {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
-                </button>
-
-                {!isCollapsed && (
-                  <div style={styles.chapterItems}>
-                    {chapter.items.map((item) => {
-                      const isActive = activeArticleId === item.id;
-                      return (
-                        <button
-                          key={item.id}
-                          onClick={() => {
-                            setActiveArticleId(item.id);
-                            setActiveArticle(item);
-                            setLeftSidebarOpen(false); // Close mobile drawer on selection
-                          }}
-                          style={{
-                            ...styles.articleLink,
-                            color: isActive ? 'var(--brand-red)' : 'var(--text-sidebar-muted)',
-                            backgroundColor: isActive ? 'rgba(207, 39, 55, 0.08)' : 'transparent',
-                            fontWeight: isActive ? '600' : '400'
-                          }}
-                        >
-                          <FileText size={14} style={{ marginRight: '8px', flexShrink: 0 }} />
-                          <span style={{ textTransform: 'none' }}>{item.name}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-            );
-          })}
-        </div>
-      </div>
-
-      {/* 2. MAIN READING AREA (CENTER) */}
-      <div style={styles.mainContainer}>
-        
-        {/* Mobile Header Bar */}
-        <div style={styles.mobileHeader}>
+      {/* 1. PERSISTENT TOP HEADER BAR (Docusaurus Style) */}
+      <div style={styles.topHeader}>
+        <div style={styles.headerLeft}>
           <button 
             onClick={() => setLeftSidebarOpen(!leftSidebarOpen)} 
             style={styles.hamburgerBtn}
+            className="mobile-hamburger"
           >
             {leftSidebarOpen ? <X size={20} /> : <Menu size={20} />}
           </button>
-          <div style={styles.mobileBrand}>
+          <div style={styles.brand}>
             <span style={{ fontWeight: '800', color: 'var(--brand-red)' }}>STAN</span>
             <span>ROBOTIX</span>
+            <span style={styles.brandBadge}>Formation</span>
           </div>
-          <button onClick={handleBackToDashboard} style={styles.mobileBackIconBtn} title="Retour au tableau de bord">
-            <ArrowLeft size={20} />
+        </div>
+        <div style={styles.headerRight}>
+          <button onClick={handleBackToDashboard} style={styles.headerBackBtn} className="exit-btn-desktop">
+            <ArrowLeft size={16} />
+            <span>Retour au Tableau de Bord</span>
           </button>
         </div>
+      </div>
 
-        {/* Breadcrumbs Navigation */}
-        <div style={styles.breadcrumbs} className="breadcrumbs-bar">
-          <span style={styles.breadcrumbLink} onClick={handleBackToDashboard} className="breadcrumb-link">Tableau de bord</span>
-          <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-          <span style={styles.breadcrumbText} className="breadcrumb-text">{activeChapter ? activeChapter.title : ''}</span>
-          <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
-          <span style={{ ...styles.breadcrumbText, color: 'var(--text-main)', fontWeight: '500' }} className="breadcrumb-text">{activeArticle.name}</span>
+      {/* 2. BODY LAYOUT (SIDEBAR + MAIN CONTENT AREA) */}
+      <div style={styles.bodyLayout}>
+        
+        {/* left sidebar navigation */}
+        <div 
+          className={`docs-sidebar ${leftSidebarOpen ? 'docs-sidebar-open' : 'docs-sidebar-closed'}`}
+          style={styles.leftSidebar}
+        >
+          {/* Navigation list */}
+          <div style={styles.sidebarNav}>
+            <div style={styles.navSectionTitle}>CURRICULUM ROBOTIQUE</div>
+            
+            {chapters.map((chapter) => {
+              const isCollapsed = collapsedChapters[chapter.id];
+              return (
+                <div key={chapter.id} style={styles.chapterGroup}>
+                  <button 
+                    onClick={() => toggleChapter(chapter.id)} 
+                    style={styles.chapterToggle}
+                  >
+                    <span style={styles.chapterTitle}>{chapter.title}</span>
+                    {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
+                  </button>
+
+                  {!isCollapsed && (
+                    <div style={styles.chapterItems}>
+                      {chapter.items.map((item) => {
+                        const isActive = activeArticleId === item.id;
+                        return (
+                          <button
+                            key={item.id}
+                            onClick={() => {
+                              setActiveArticleId(item.id);
+                              setActiveArticle(item);
+                              setLeftSidebarOpen(false); // Close mobile drawer on selection
+                            }}
+                            style={{
+                              ...styles.articleLink,
+                              color: isActive ? 'var(--brand-red)' : 'var(--text-sidebar-muted)',
+                              backgroundColor: isActive ? 'rgba(207, 39, 55, 0.08)' : 'transparent',
+                              fontWeight: isActive ? '600' : '400'
+                            }}
+                          >
+                            <FileText size={14} style={{ marginRight: '8px', flexShrink: 0 }} />
+                            <span style={{ textTransform: 'none' }}>{item.name}</span>
+                          </button>
+                        );
+                      })}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
         </div>
 
-        {/* Content Wrapper */}
-        <div style={styles.contentLayout}>
+        {/* 3. MAIN READING WRAPPER (CENTER) */}
+        <div style={styles.mainContainer}>
           
-          {/* Main Markdown Body */}
-          <div 
-            ref={contentRef} 
-            style={styles.readingPane} 
-            className="markdown-body"
-          >
-            <div 
-              dangerouslySetInnerHTML={{ __html: htmlContent }} 
-              style={styles.markdownRender}
-            />
+          {/* Breadcrumbs Navigation */}
+          <div style={styles.breadcrumbs} className="breadcrumbs-bar">
+            <span style={styles.breadcrumbLink} onClick={handleBackToDashboard} className="breadcrumb-link">Tableau de bord</span>
+            <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <span style={styles.breadcrumbText} className="breadcrumb-text">{activeChapter ? activeChapter.title : ''}</span>
+            <ChevronRight size={14} style={{ color: 'var(--text-muted)', flexShrink: 0 }} />
+            <span style={{ ...styles.breadcrumbText, color: 'var(--text-main)', fontWeight: '500' }} className="breadcrumb-text">{activeArticle.name}</span>
           </div>
 
-          {/* 3. TABLE OF CONTENTS SIDEBAR (RIGHT) */}
-          <div style={styles.rightSidebar} className="toc-sidebar">
-            <div style={styles.tocTitle}>
-              <List size={16} style={{ marginRight: '8px' }} />
-              SUR CETTE PAGE
-            </div>
+          {/* Content columns */}
+          <div style={styles.contentLayout}>
             
-            {headings.length === 0 ? (
-              <div style={styles.tocEmpty}>Aucun sous-titre dans cette leçon.</div>
-            ) : (
-              <div style={styles.tocList}>
-                {headings.map((h, i) => (
-                  <a
-                    key={i}
-                    href={`#${h.id}`}
-                    style={{
-                      ...styles.tocLink,
-                      paddingLeft: h.level === 3 ? '24px' : '12px',
-                      fontSize: h.level === 3 ? '0.8rem' : '0.85rem',
-                      color: 'var(--text-muted)'
-                    }}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      const element = document.getElementById(h.id);
-                      if (element) {
-                        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
-                      }
-                    }}
-                  >
-                    {h.text}
-                  </a>
-                ))}
+            {/* Center reading panel */}
+            <div 
+              ref={contentRef} 
+              style={styles.readingPane} 
+              className="markdown-body"
+            >
+              <div 
+                dangerouslySetInnerHTML={{ __html: htmlContent }} 
+                style={styles.markdownRender}
+              />
+            </div>
+
+            {/* Right Table of Contents (ToC) */}
+            <div style={styles.rightSidebar} className="toc-sidebar">
+              <div style={styles.tocTitle}>
+                <List size={16} style={{ marginRight: '8px' }} />
+                SUR CETTE PAGE
               </div>
-            )}
+              
+              {headings.length === 0 ? (
+                <div style={styles.tocEmpty}>Aucun sous-titre dans cette leçon.</div>
+              ) : (
+                <div style={styles.tocList}>
+                  {headings.map((h, i) => (
+                    <a
+                      key={i}
+                      href={`#${h.id}`}
+                      style={{
+                        ...styles.tocLink,
+                        paddingLeft: h.level === 3 ? '24px' : '12px',
+                        fontSize: h.level === 3 ? '0.8rem' : '0.85rem',
+                        color: 'var(--text-muted)'
+                      }}
+                      onClick={(e) => {
+                        e.preventDefault();
+                        const element = document.getElementById(h.id);
+                        if (element) {
+                          element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                      }}
+                    >
+                      {h.text}
+                    </a>
+                  ))}
+                </div>
+              )}
+            </div>
+
           </div>
 
         </div>
@@ -403,6 +391,7 @@ export default function LearningPage({ onSelectBoard }) {
 const styles = {
   appContainer: {
     display: 'flex',
+    flexDirection: 'column',
     width: '100vw',
     height: '100vh',
     overflow: 'hidden',
@@ -410,6 +399,77 @@ const styles = {
     fontFamily: "'Inter', sans-serif",
   },
   
+  // Persistent Top Header Bar (Desktop & Mobile)
+  topHeader: {
+    height: '60px',
+    borderBottom: '1px solid var(--border-color)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    padding: '0 2rem',
+    backgroundColor: 'var(--bg-sidebar)',
+    flexShrink: 0,
+    zIndex: 100,
+    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+  },
+  headerLeft: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '1rem',
+  },
+  brand: {
+    fontSize: '1.2rem',
+    fontWeight: '700',
+    letterSpacing: '-0.5px',
+    color: 'var(--text-main)',
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+  },
+  brandBadge: {
+    fontSize: '0.7rem',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    backgroundColor: 'var(--brand-red-alpha-10)',
+    color: 'var(--brand-red)',
+    fontWeight: '600',
+    marginLeft: '0.25rem',
+  },
+  headerRight: {
+    display: 'flex',
+    alignItems: 'center',
+  },
+  headerBackBtn: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '0.5rem',
+    padding: '0.5rem 1rem',
+    backgroundColor: 'var(--brand-red)',
+    color: 'white',
+    border: 'none',
+    borderRadius: '6px',
+    fontSize: '0.85rem',
+    fontWeight: '600',
+    cursor: 'pointer',
+    transition: 'all 0.2s',
+  },
+  hamburgerBtn: {
+    backgroundColor: 'transparent',
+    border: 'none',
+    color: 'var(--text-main)',
+    cursor: 'pointer',
+    display: 'none', // Managed by responsive CSS class
+  },
+
+  // Split Body Layout
+  bodyLayout: {
+    flex: 1,
+    display: 'flex',
+    width: '100%',
+    height: 'calc(100% - 60px)',
+    overflow: 'hidden',
+  },
+
   // Left Doc Navigation Sidebar
   leftSidebar: {
     width: '280px',
@@ -420,27 +480,13 @@ const styles = {
     flexDirection: 'column',
     flexShrink: 0,
     zIndex: 99,
-    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1), opacity 0.3s ease',
+    transition: 'transform 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
   },
   sidebarHeader: {
-    padding: '1rem',
-    borderBottom: '1px solid var(--border-color)',
+    display: 'none', // Deprecated since we have the top header
   },
   backBtn: {
-    width: '100%',
-    display: 'flex',
-    alignItems: 'center',
-    justifyContent: 'center',
-    gap: '0.5rem',
-    padding: '0.6rem',
-    backgroundColor: 'transparent',
-    border: '1px solid var(--border-color)',
-    borderRadius: '8px',
-    color: 'var(--text-sidebar-muted)',
-    fontSize: '0.9rem',
-    fontWeight: '600',
-    cursor: 'pointer',
-    transition: 'all 0.2s',
+    display: 'none',
   },
   sidebarNav: {
     flex: 1,
@@ -498,41 +544,13 @@ const styles = {
     textTransform: 'none',
   },
 
-  // Main workspace
+  // Main reading wrapper
   mainContainer: {
     flex: 1,
     height: '100%',
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-  },
-  mobileHeader: {
-    height: '60px',
-    borderBottom: '1px solid var(--border-color)',
-    display: 'none', // Shown only on mobile query
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    padding: '0 1rem',
-    backgroundColor: 'var(--bg-panel)',
-    flexShrink: 0,
-  },
-  hamburgerBtn: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: 'var(--text-main)',
-    cursor: 'pointer',
-  },
-  mobileBrand: {
-    fontSize: '1.1rem',
-    fontWeight: '700',
-    letterSpacing: '-0.5px',
-    color: 'var(--text-main)',
-  },
-  mobileBackIconBtn: {
-    backgroundColor: 'transparent',
-    border: 'none',
-    color: 'var(--text-main)',
-    cursor: 'pointer',
   },
   breadcrumbs: {
     padding: '1rem 2.5rem',
