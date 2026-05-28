@@ -21,7 +21,10 @@ const chapters = [
     items: [
       { id: "m1_1_cad_onshape", name: "M1.1 - CAO avec Onshape", file: "m1_1_cad_onshape.md" },
       { id: "m1_2_gears_motors", name: "M1.2 - Engrenages & Moteurs", file: "m1_2_gears_motors.md" },
-      { id: "m1_3_mechanisms", name: "M1.3 - Conception de Mécanismes", file: "m1_3_mechanisms.md" }
+      { id: "m1_3_mechanisms", name: "M1.3 - Conception de Mécanismes", file: "m1_3_mechanisms.md" },
+      { id: "m2_1_cad_onshape_advanced", name: "M2.1 - CAO Descendante Onshape", file: "m2_1_cad_onshape_advanced.md" },
+      { id: "m2_2_tolerances_machining", name: "M2.2 - Tolérances & Usinage", file: "m2_2_tolerances_machining.md" },
+      { id: "m2_3_heavy_gearboxes", name: "M2.3 - Réducteurs Lourds & Boîtes", file: "m2_3_heavy_gearboxes.md" }
     ]
   },
   {
