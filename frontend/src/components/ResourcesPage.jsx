@@ -1,12 +1,12 @@
 import React, { useState } from 'react';
 import { 
-  Calculator, Settings, Zap, Compass, ExternalLink, 
-  RefreshCw, Layers, CheckCircle2, Copy, FileText 
+  Calculator, Settings, ShieldAlert, Compass, ExternalLink, 
+  RefreshCw, Layers, CheckCircle2, Copy, FileText, HelpCircle, Activity
 } from 'lucide-react';
 
 export default function ResourcesPage() {
   const [activeTab, setActiveTab] = useState('calculators'); // 'calculators' | 'converters' | 'links'
-  const [activeCalculator, setActiveCalculator] = useState('gear'); // 'gear' | 'battery'
+  const [activeCalculator, setActiveCalculator] = useState('gear'); // 'gear' | 'gearbox-matrix'
 
   // Gear Ratio State
   const [gearDriver, setGearDriver] = useState(12);
@@ -14,12 +14,9 @@ export default function ResourcesPage() {
   const [motorRpm, setMotorRpm] = useState(100);
   const [motorTorque, setMotorTorque] = useState(2.5); // N.m
 
-  // Battery Life State
-  const [batteryCapacity, setBatteryCapacity] = useState(2200); // mAh
-  const [motorCount, setMotorCount] = useState(4);
-  const [avgDraw, setAvgDraw] = useState(1.5); // A per motor
-  const [auxDraw, setAuxDraw] = useState(0.5); // A total (RasPi, sensors, controller)
-  const [dischargeLimit, setDischargeLimit] = useState(80); // % safe discharge
+  // FRC Gearbox Matrix State
+  const [selectedMechanism, setSelectedMechanism] = useState('drivetrain');
+  const [selectedMotor, setSelectedMotor] = useState('kraken');
 
   // Unit Converter State
   const [inchVal, setInchVal] = useState(1);
@@ -42,11 +39,109 @@ export default function ResourcesPage() {
   const drivenRpm = gearRatio > 0 ? (motorRpm / gearRatio).toFixed(1) : 0;
   const drivenTorque = gearRatio > 0 ? (motorTorque * gearRatio).toFixed(2) : 0;
 
-  // Calculations for Battery
-  const totalAvgAmps = (motorCount * avgDraw) + auxDraw;
-  const safeCapacityAh = (batteryCapacity / 1000) * (dischargeLimit / 100);
-  const estimatedHours = totalAvgAmps > 0 ? safeCapacityAh / totalAvgAmps : 0;
-  const estimatedMinutes = (estimatedHours * 60).toFixed(0);
+  // Motors Database FRC
+  const motorsDb = {
+    neo: {
+      name: 'REV NEO Brushless',
+      freeSpeed: 5676, // RPM
+      stallTorque: 3.36, // N.m
+      stallCurrent: 105, // A
+      peakPower: 406, // W
+      notes: 'Moteur polyvalent FRC par excellence. Fiable, bon rapport couple/vitesse.',
+      color: '#ffa500'
+    },
+    neo550: {
+      name: 'REV NEO 550',
+      freeSpeed: 11000, // RPM
+      stallTorque: 0.97, // N.m
+      stallCurrent: 100, // A
+      peakPower: 278, // W
+      notes: 'Ultra compact et léger. Vitesse très élevée mais chauffe rapidement sous forte charge. Perte de couple rapide à basse vitesse.',
+      color: '#38bdf8'
+    },
+    kraken: {
+      name: 'WCP Kraken X60',
+      freeSpeed: 6000, // RPM
+      stallTorque: 9.37, // N.m
+      stallCurrent: 366, // A
+      peakPower: 1102, // W
+      notes: 'Le monstre de puissance FRC actuel. Refroidissement intégré, couple massif, rendement exceptionnel.',
+      color: '#cf2737'
+    }
+  };
+
+  // FRC Mechanisms Database
+  const mechanismsDb = {
+    drivetrain: {
+      name: 'Châssis / Base Pilotable (Drivetrain)',
+      minRatio: 4.5,
+      maxRatio: 8.5,
+      recommendedMotor: 'kraken',
+      suitability: {
+        kraken: 'Recommandé (Performance maximale, forte accélération)',
+        neo: 'Adapté (Choix standard et économique)',
+        neo550: 'CRITIQUE (Absolument proscrit: surchauffe et casse immédiate)'
+      },
+      notes: 'Exige une forte accélération et une résistance aux impacts. Les modules Swerve (ex: MAXSwerve, SDS MK4i) utilisent des réductions typiques de 5.5:1 à 6.75:1.'
+    },
+    arm: {
+      name: 'Bras Articulé / Pivot (Heavy Arm / Joint)',
+      minRatio: 50.0,
+      maxRatio: 150.0,
+      recommendedMotor: 'kraken',
+      suitability: {
+        kraken: 'Idéal (Couple de maintien élevé, puissance sous contrôle)',
+        neo: 'Recommandé (Très bon comportement avec un MAXPlanetary)',
+        neo550: 'Déconseillé (Sauf très petits mécanismes légers)'
+      },
+      notes: 'Réduction massive obligatoire pour contrer la gravité et éviter le "backdrive". Ajoutez un ressort à gaz d\'équilibrage et utilisez des freins moteurs intégrés (Brake mode).'
+    },
+    elevator: {
+      name: 'Élévateur (Elevator / Lift)',
+      minRatio: 8.0,
+      maxRatio: 25.0,
+      recommendedMotor: 'neo',
+      suitability: {
+        kraken: 'Excellent (Vitesse ascensionnelle fulgurante)',
+        neo: 'Recommandé (Excellent contrôle de position avec encodeur)',
+        neo550: 'Risqué (Seulement sur mini-chariots ou indexeurs verticaux)'
+      },
+      notes: 'Attention au couple requis lors de la montée à pleine charge. L\'utilisation d\'un cliquet anti-retour ou d\'un frein pneumatique prévient la chute libre hors tension.'
+    },
+    shooter: {
+      name: 'Lanceur / Volant d\'inertie (Shooter)',
+      minRatio: 1.0,
+      maxRatio: 2.0,
+      recommendedMotor: 'kraken',
+      suitability: {
+        kraken: 'Idéal (Récupération de RPM ultra-rapide entre les tirs)',
+        neo: 'Très bon (Performances classiques éprouvées)',
+        neo550: 'Non adapté (Inertie thermique insuffisante)'
+      },
+      notes: 'Généralement configuré en prise directe (1:1) ou légère multiplication/réduction 1.5:1. Utilisez un volant d\'inertie lourd pour stabiliser la vitesse lors du passage des notes/balles.'
+    },
+    intake: {
+      name: 'Admission / Rouleaux (Intake / Roller)',
+      minRatio: 3.0,
+      maxRatio: 10.0,
+      recommendedMotor: 'neo550',
+      suitability: {
+        kraken: 'Surdimensionné (Trop lourd et puissant pour ce besoin)',
+        neo: 'Excellent (Robuste et fiable)',
+        neo550: 'Idéal (Léger, compact, haut régime parfait pour attraper les objets)'
+      },
+      notes: 'Transmettez le mouvement par courroies crantées (HTD 5mm) ou roues en polyuréthane. Permet au moteur de sauter des crans ou glisser en cas de blocage sans casser.'
+    }
+  };
+
+  // Active matrix selection data
+  const currentMotor = motorsDb[selectedMotor];
+  const currentMechanism = mechanismsDb[selectedMechanism];
+
+  // Live estimated speed & torque output for selected combo
+  const avgReduction = ((currentMechanism.minRatio + currentMechanism.maxRatio) / 2);
+  const estOutputRpm = (currentMotor.freeSpeed / avgReduction).toFixed(0);
+  const estStallTorque = (currentMotor.stallTorque * avgReduction).toFixed(1);
 
   // Clearance guide search state
   const [clearanceSearch, setClearanceSearch] = useState('');
@@ -66,7 +161,7 @@ export default function ResourcesPage() {
 
   const linksData = [
     { 
-      category: 'Documentation & Règles', 
+      category: 'Documentation & Règles FRC', 
       items: [
         { name: 'FRC WPILib Docs', url: 'https://docs.wpilib.org/en/stable/', desc: 'La bible absolue de programmation pour robots de compétition FRC (C++, Java, Python).' },
         { name: 'Rules FTC (First Tech Challenge)', url: 'https://www.firstinspires.org/resource-library/ftc/game-manuals', desc: 'Règlements officiels, spécifications des moteurs et guides d\'inspection de conformité technique.' },
@@ -115,7 +210,7 @@ export default function ResourcesPage() {
             fontWeight: activeTab === 'calculators' ? '600' : '500'
           }}
         >
-          <Settings size={16} /> Calculateurs Mécaniques
+          <Settings size={16} /> Calculateurs & Réductions FRC
         </button>
         <button 
           onClick={() => setActiveTab('converters')}
@@ -159,19 +254,19 @@ export default function ResourcesPage() {
                   borderLeft: activeCalculator === 'gear' ? '3px solid var(--brand-red)' : '3px solid transparent'
                 }}
               >
-                <Layers size={16} /> Rapport d'Engrenages
+                <Layers size={16} /> Rapport d'Engrenages Simple
               </button>
               <button 
-                onClick={() => setActiveCalculator('battery')}
+                onClick={() => setActiveCalculator('gearbox-matrix')}
                 style={{
                   ...styles.calcSidebarBtn,
-                  backgroundColor: activeCalculator === 'battery' ? 'var(--brand-red-alpha-10)' : 'transparent',
-                  color: activeCalculator === 'battery' ? 'var(--brand-red)' : 'var(--text-main)',
-                  fontWeight: activeCalculator === 'battery' ? '600' : '500',
-                  borderLeft: activeCalculator === 'battery' ? '3px solid var(--brand-red)' : '3px solid transparent'
+                  backgroundColor: activeCalculator === 'gearbox-matrix' ? 'var(--brand-red-alpha-10)' : 'transparent',
+                  color: activeCalculator === 'gearbox-matrix' ? 'var(--brand-red)' : 'var(--text-main)',
+                  fontWeight: activeCalculator === 'gearbox-matrix' ? '600' : '500',
+                  borderLeft: activeCalculator === 'gearbox-matrix' ? '3px solid var(--brand-red)' : '3px solid transparent'
                 }}
               >
-                <Zap size={16} /> Autonomie Batterie & Courant
+                <Activity size={16} /> Matrice Réductions & Moteurs FRC
               </button>
             </div>
 
@@ -260,92 +355,137 @@ export default function ResourcesPage() {
                 </div>
               )}
 
-              {/* 1.2 Battery Draw Calculator */}
-              {activeCalculator === 'battery' && (
+              {/* 1.2 FRC Gearbox Matrix Chart */}
+              {activeCalculator === 'gearbox-matrix' && (
                 <div style={styles.calcFlex}>
                   <div style={styles.calcInputs}>
-                    <h3 style={styles.calcTitle}>Calculateur d'Autonomie & Capacité</h3>
-                    <p style={styles.calcDesc}>Estimez l'autonomie utile de votre robot en fonction de la capacité de votre LiPo/NiMH et du courant consommé.</p>
+                    <h3 style={styles.calcTitle}>Matrice de Sélection Réducteurs & Moteurs FRC</h3>
+                    <p style={styles.calcDesc}>
+                      Sélectionnez un mécanisme de robot FRC et un moteur brushless de référence pour visualiser les réductions conseillées et les performances théoriques estimées.
+                    </p>
                     
+                    {/* Setup selectors */}
                     <div style={styles.inputGrid}>
                       <div style={styles.formGroup}>
-                        <label style={styles.label}>Capacité Batterie (mAh)</label>
-                        <input 
-                          type="number" 
-                          step="100"
-                          value={batteryCapacity} 
-                          onChange={(e) => setBatteryCapacity(Math.max(1, parseInt(e.target.value) || 1))}
-                          style={styles.input} 
-                        />
-                      </div>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Nombre de Moteurs Actifs</label>
-                        <input 
-                          type="number" 
-                          value={motorCount} 
-                          onChange={(e) => setMotorCount(Math.max(0, parseInt(e.target.value) || 0))}
-                          style={styles.input} 
-                        />
-                      </div>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Courant Moyen par Moteur (Amps)</label>
-                        <input 
-                          type="number" 
-                          step="0.1"
-                          value={avgDraw} 
-                          onChange={(e) => setAvgDraw(Math.max(0, parseFloat(e.target.value) || 0))}
-                          style={styles.input} 
-                        />
-                      </div>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Courant Auxiliaire Total (Raspberry/Lidar - Amps)</label>
-                        <input 
-                          type="number" 
-                          step="0.1"
-                          value={auxDraw} 
-                          onChange={(e) => setAuxDraw(Math.max(0, parseFloat(e.target.value) || 0))}
-                          style={styles.input} 
-                        />
-                      </div>
-                      <div style={styles.formGroup}>
-                        <label style={styles.label}>Seuil de Décharge de Sécurité (%)</label>
+                        <label style={styles.label}>1. Choisir le Mécanisme FRC</label>
                         <select 
-                          value={dischargeLimit}
-                          onChange={(e) => setDischargeLimit(parseInt(e.target.value))}
+                          value={selectedMechanism}
+                          onChange={(e) => setSelectedMechanism(e.target.value)}
                           style={styles.select}
                         >
-                          <option value="50">50% (Très Conservateur LiPo)</option>
-                          <option value="80">80% (Conseillé LiPo/LiFe)</option>
-                          <option value="90">90% (NiMH standard)</option>
-                          <option value="100">100% (Décharge totale à éviter)</option>
+                          <option value="drivetrain">Base Pilotable / Drivetrain</option>
+                          <option value="arm">Bras Articulé / Pivot Lourd</option>
+                          <option value="elevator">Élévateur / Lift</option>
+                          <option value="shooter">Lanceur (Shooter)</option>
+                          <option value="intake">Admission / Intake (Rouleaux)</option>
                         </select>
                       </div>
+
+                      <div style={styles.formGroup}>
+                        <label style={styles.label}>2. Choisir le Moteur FRC</label>
+                        <div style={styles.motorRadioGroup}>
+                          <button 
+                            type="button"
+                            onClick={() => setSelectedMotor('kraken')}
+                            style={{
+                              ...styles.motorBadgeBtn,
+                              backgroundColor: selectedMotor === 'kraken' ? 'var(--brand-red-alpha-20)' : 'transparent',
+                              border: selectedMotor === 'kraken' ? '1px solid var(--brand-red)' : '1px solid var(--border-color)',
+                              color: selectedMotor === 'kraken' ? 'var(--brand-red)' : 'var(--text-main)'
+                            }}
+                          >
+                            Kraken X60
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => setSelectedMotor('neo')}
+                            style={{
+                              ...styles.motorBadgeBtn,
+                              backgroundColor: selectedMotor === 'neo' ? 'rgba(255, 165, 0, 0.15)' : 'transparent',
+                              border: selectedMotor === 'neo' ? '1px solid #ffa500' : '1px solid var(--border-color)',
+                              color: selectedMotor === 'neo' ? '#ffa500' : 'var(--text-main)'
+                            }}
+                          >
+                            NEO
+                          </button>
+                          <button 
+                            type="button"
+                            onClick={() => setSelectedMotor('neo550')}
+                            style={{
+                              ...styles.motorBadgeBtn,
+                              backgroundColor: selectedMotor === 'neo550' ? 'rgba(56, 189, 248, 0.15)' : 'transparent',
+                              border: selectedMotor === 'neo550' ? '1px solid #38bdf8' : '1px solid var(--border-color)',
+                              color: selectedMotor === 'neo550' ? '#38bdf8' : 'var(--text-main)'
+                            }}
+                          >
+                            NEO 550
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Compatibility Alert & Guidance */}
+                    <div style={styles.suitabilityPanel}>
+                      <span style={styles.suitabilityHeading}>Compatibilité Mécanique :</span>
+                      <div style={{
+                        ...styles.suitabilityStatus,
+                        color: currentMechanism.suitability[selectedMotor].includes('CRITIQUE') || currentMechanism.suitability[selectedMotor].includes('proscrit') ? '#ef4444' :
+                               currentMechanism.suitability[selectedMotor].includes('Recommandé') || currentMechanism.suitability[selectedMotor].includes('Idéal') || currentMechanism.suitability[selectedMotor].includes('Excellent') ? '#10b981' : '#f59e0b'
+                      }}>
+                        <ShieldAlert size={16} /> {currentMechanism.suitability[selectedMotor]}
+                      </div>
+                      <p style={styles.suitabilityDesc}>{currentMechanism.notes}</p>
+                    </div>
+
+                    {/* FRC Advice panel */}
+                    <div style={styles.advicePanel}>
+                      <h5 style={styles.adviceTitle}>Recommandations de Conception FRC :</h5>
+                      <ul style={styles.adviceList}>
+                        <li>Rapport de réduction recommandé : <strong style={{ color: 'var(--brand-red)' }}>{currentMechanism.minRatio}:1 à {currentMechanism.maxRatio}:1</strong></li>
+                        <li>Type de réducteur COTS conseillé : {
+                          selectedMechanism === 'arm' ? 'MAXPlanetary (REV) ou boite planétaire robuste avec étage à chaîne' :
+                          selectedMechanism === 'drivetrain' ? 'Réducteurs Swerve FRC intégrés ou engrenages droits 2 étages robustes' :
+                          selectedMechanism === 'intake' ? 'MAXPlanetary léger / UltraPlanetary (REV) ou transmission par courroie crantée' :
+                          'Réducteurs planétaires ou boite à engrenages droits FRC classique'
+                        }</li>
+                      </ul>
                     </div>
                   </div>
 
+                  {/* Estimated output parameters on this mechanism */}
                   <div style={styles.calcResults}>
-                    <h4 style={styles.resultsHeading}>Résultats Estimés</h4>
+                    <h4 style={styles.resultsHeading}>Spécifications Théoriques</h4>
                     
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Courant total consommé :</span>
-                      <span style={styles.resultValue}>{totalAvgAmps.toFixed(2)} A</span>
+                      <span style={styles.resultLabel}>Moteur sélectionné :</span>
+                      <span style={{ ...styles.resultValue, color: currentMotor.color }}>{currentMotor.name}</span>
                     </div>
 
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Capacité utile disponible :</span>
-                      <span style={styles.resultValue}>{safeCapacityAh.toFixed(2)} Ah</span>
+                      <span style={styles.resultLabel}>Vitesse à vide (Free Speed) :</span>
+                      <span style={styles.resultValue}>{currentMotor.freeSpeed} RPM</span>
+                    </div>
+
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>Couple de calage (Stall) :</span>
+                      <span style={styles.resultValue}>{currentMotor.stallTorque} N.m</span>
+                    </div>
+
+                    <div style={styles.resultItem}>
+                      <span style={styles.resultLabel}>Puissance de crête (Peak Power) :</span>
+                      <span style={{ ...styles.resultValue, fontWeight: '700' }}>{currentMotor.peakPower} W</span>
                     </div>
 
                     <div style={styles.resultDivider}></div>
 
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Autonomie Estimée en Charge :</span>
-                      <span style={{...styles.resultValueHighlight, color: 'var(--brand-red)'}}>{estimatedMinutes} Minutes</span>
+                      <span style={styles.resultLabel}>Vitesse de sortie estimée ({avgReduction.toFixed(1)}:1) :</span>
+                      <span style={styles.resultValueHighlight}>{estOutputRpm} RPM</span>
                     </div>
 
                     <div style={styles.resultItem}>
-                      <span style={styles.resultLabel}>Durée de fonctionnement :</span>
-                      <span style={styles.resultValue}>~ {(estimatedMinutes / 60).toFixed(1)} heure(s)</span>
+                      <span style={styles.resultLabel}>Couple de calage démultiplié :</span>
+                      <span style={{ ...styles.resultValueHighlight, color: '#10b981' }}>{estStallTorque} N.m</span>
                     </div>
                   </div>
                 </div>
@@ -634,7 +774,7 @@ const styles = {
     flex: 1.3,
     display: 'flex',
     flexDirection: 'column',
-    gap: '10px',
+    gap: '12px',
     minWidth: '300px'
   },
   calcTitle: {
@@ -680,6 +820,70 @@ const styles = {
     borderRadius: 'var(--border-radius-sm)',
     fontSize: '0.875rem',
     cursor: 'pointer'
+  },
+  motorRadioGroup: {
+    display: 'flex',
+    gap: '8px',
+    marginTop: '2px'
+  },
+  motorBadgeBtn: {
+    flex: 1,
+    padding: '8px 4px',
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    borderRadius: 'var(--border-radius-sm)',
+    cursor: 'pointer',
+    transition: 'all var(--transition-fast)'
+  },
+  suitabilityPanel: {
+    marginTop: '10px',
+    padding: '12px 14px',
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+    borderLeft: '4px solid var(--brand-red)',
+    borderRadius: '0 var(--border-radius-sm) var(--border-radius-sm) 0',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  suitabilityHeading: {
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    color: 'var(--text-muted)',
+    textTransform: 'uppercase'
+  },
+  suitabilityStatus: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px',
+    fontSize: '0.85rem',
+    fontWeight: '700'
+  },
+  suitabilityDesc: {
+    fontSize: '0.8rem',
+    color: 'var(--text-muted)',
+    lineHeight: '1.3'
+  },
+  advicePanel: {
+    marginTop: '8px',
+    padding: '12px 14px',
+    backgroundColor: 'rgba(255, 255, 255, 0.01)',
+    borderRadius: 'var(--border-radius-sm)',
+    border: '1px solid var(--border-color)'
+  },
+  adviceTitle: {
+    fontSize: '0.8rem',
+    fontWeight: '700',
+    color: 'var(--text-main)',
+    marginBottom: '6px'
+  },
+  adviceList: {
+    listStyleType: 'disc',
+    paddingLeft: '18px',
+    fontSize: '0.8rem',
+    color: 'var(--text-muted)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '4px'
   },
   calcResults: {
     flex: 1,
