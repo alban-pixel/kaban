@@ -4,7 +4,7 @@ import { api } from '../utils/api.js';
 import { 
   Plus, Search, LogOut, Sun, Moon, 
   ChevronRight, ChevronDown, Folder, 
-  FolderOpen, Layout, MoreVertical, Trash, Edit2, X, Shield, Lock
+  FolderOpen, Layout, MoreVertical, Trash, Edit2, X, Shield, Lock, BookOpen
 } from 'lucide-react';
 
 export default function Sidebar({ activeBoardId, onSelectBoard }) {
@@ -505,6 +505,21 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
 
       {/* Sidebar Footer Controls */}
       <div style={styles.sidebarFooter}>
+        {/* Ressources Utiles & Calculateurs */}
+        <button 
+          onClick={() => onSelectBoard('resources', 'Ressources')} 
+          style={{ 
+            ...styles.footerBtn, 
+            color: activeBoardId === 'resources' ? 'var(--brand-red)' : 'var(--text-sidebar-muted)',
+            backgroundColor: activeBoardId === 'resources' ? 'rgba(207, 39, 55, 0.1)' : 'transparent',
+            fontWeight: activeBoardId === 'resources' ? '600' : '500'
+          }}
+          title="Ressources & Calculateurs"
+        >
+          <BookOpen size={18} />
+          <span>Ressources</span>
+        </button>
+
         {/* Administration (Admin only) */}
         {user.role === 'admin' && (
           <button 

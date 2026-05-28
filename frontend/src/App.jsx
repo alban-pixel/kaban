@@ -5,6 +5,7 @@ import Sidebar from './components/Sidebar.jsx';
 import KanbanBoard from './components/KanbanBoard.jsx';
 import CardDetailModal from './components/CardDetailModal.jsx';
 import AdminPage from './components/AdminPage.jsx';
+import ResourcesPage from './components/ResourcesPage.jsx';
 
 function MainAppContent() {
   const { user, loading } = useAuth();
@@ -63,6 +64,8 @@ function MainAppContent() {
       {/* Main Kanban workspace */}
       {activeBoardId === 'admin' ? (
         <AdminPage onSelectBoard={handleSelectBoard} />
+      ) : activeBoardId === 'resources' ? (
+        <ResourcesPage />
       ) : (
         <KanbanBoard 
           key={`${activeBoardId}-${boardReloadKey}`} 
