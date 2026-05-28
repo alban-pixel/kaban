@@ -4,7 +4,7 @@ import { api } from '../utils/api.js';
 import { 
   Plus, Search, LogOut, Sun, Moon, 
   ChevronRight, ChevronDown, Folder, 
-  FolderOpen, Layout, MoreVertical, Trash, Edit2, X, Shield, Lock, BookOpen
+  FolderOpen, Layout, MoreVertical, Trash, Edit2, X, Shield, Lock, BookOpen, GraduationCap
 } from 'lucide-react';
 
 export default function Sidebar({ activeBoardId, onSelectBoard }) {
@@ -518,6 +518,21 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
         >
           <BookOpen size={18} />
           <span>Ressources</span>
+        </button>
+
+        {/* Apprentissage & Formation */}
+        <button 
+          onClick={() => onSelectBoard('learning', 'Apprentissage')} 
+          style={{ 
+            ...styles.footerBtn, 
+            color: activeBoardId === 'learning' ? 'var(--brand-red)' : 'var(--text-sidebar-muted)',
+            backgroundColor: activeBoardId === 'learning' ? 'rgba(207, 39, 55, 0.1)' : 'transparent',
+            fontWeight: activeBoardId === 'learning' ? '600' : '500'
+          }}
+          title="Apprentissage & Formation"
+        >
+          <GraduationCap size={18} />
+          <span>Apprentissage</span>
         </button>
 
         {/* Administration (Admin only) */}

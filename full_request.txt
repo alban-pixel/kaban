@@ -1,0 +1,43 @@
+<USER_REQUEST>
+rajoute une page apprentissage qui aura des ressources pour apprendre la robotique, voici pleins de ressources / choses a apprendre. focus toi bien sur les details et sur l'apprentissage complet et profond. liste ressources frc 6622 : 
+
+- [Technical Resources | FIRST Robotics Competition](https://www.firstinspires.org/resources/library/frc/technical-resources)  
+- [Team Organization, | Spectrum3847](https://www.spectrum3847.org/resources/other-teams-resources/team-organization)  
+- [The Unofficial FRC Mechanism Encyclopedia – Project Bucephalus](https://www.projectb.net.au/resources/robot-mechanisms/#GPE)  
+- [Onshape Fundamentals: CAD](https://learn.onshape.com/collections/onshape-fundamentals-cad)  
+- [Hardware \- Basics — FIRST Robotics Competition documentation](https://docs.wpilib.org/en/stable/docs/hardware/hardware-basics/index.html)  
+- [Hardware Tutorials — FIRST Robotics Competition documentation](https://docs.wpilib.org/en/stable/docs/hardware/hardware-tutorials/index.html#)  
+- [NASA RAP Robotics Design Guide](https://robotics.nasa.gov/nasa-rap-robotics-design-guide/)  
+- [FRC Resources](https://robotics.nasa.gov/frc-resources/)  
+- [LYNK Library of Knowledge](https://docs.lynkrobotics.org/#gsc.tab=0)  
+- [FRC Robot Basics Guide](https://www.revrobotics.com/content/docs/FRC-Robot-Basics-Guide.pdf)  
+- [Design 101](https://www.firstinspires.org/hubfs/web/program/frc/resources/design-101.pdf?hsLang=en)  
+- [https://hcwilson.weebly.com/uploads/3/8/4/6/38463501/frc\_guide\_-\_arpan\_rao.pdf](https://hcwilson.weebly.com/uploads/3/8/4/6/38463501/frc_guide_-_arpan_rao.pdf)
+
+choses a mettre dans les cours : 
+
+- D1.1 Overview of FRC Robots \- [Video](https://www.youtube.com/watch?v=86NCQfrjNr0) \- [Slides](https://docs.google.com/presentation/d/1IMirGYkg5m0WvAMZfOa9wDqTR74IMB_VLnsSxgjjoD8/edit)  
+- F1.1 \- What is FRC? \- [Slides](https://docs.google.com/presentation/d/1HGakEB6jhE4WON5OCA4wB5tr2pTyJo5cIO3TNS4YmfQ/edit)  
+- F1.2 \- What do team members do? \- [Slides](https://docs.google.co
+<truncated 4154 bytes>
+OakvGf0) \- [Slides](https://docs.google.com/presentation/d/e/2PACX-1vTdfp9zJ1EUZ9ZIVI4uMivg0x7GLsNbDQgdk2IbwGThiw0M_uOVyH3kKjSVdJiKPYryoEmLRMVlAKAz/pub?start=false&loop=false&delayms=3000)  
+-   
+- B2.5 FRC 3D Printed Parts \- [Slides](https://docs.google.com/presentation/d/1w-zGo9hEuVamzVrmhK3MJni0aftu0k9ZUnMRb93MIrI/edit#slide=id.p)  
+-   
+- B3.1 Maintenance and Triage \- [Slides](https://docs.google.com/presentation/d/1m0f9urPvA5mDsYUIbJfKmZDw2Bal5va4vqTf4cG_kvM/edit#slide=id.p) \-  [Video](https://www.youtube.com/watch?v=TsYSL9athTk)  
+-   
+- Build Self-Learning Resources \- [Slides](https://docs.google.com/presentation/d/e/2PACX-1vRaIkRvKioVmcl1P6vpddYPYC43QjaxsRZu6qavmp3lNpBcQ0noBf91Pv4N8DwSDgcxdfG2IoPqTNs7/pub?start=false&loop=false&delayms=3000)  
+-   
+- [https://www.youtube.com/watch?v=K0oyG6LqFpY](https://www.youtube.com/watch?v=K0oyG6LqFpY)  
+- [https://www.spectrum3847.org/resources/inexpensive-build-tips](https://www.spectrum3847.org/resources/inexpensive-build-tips)  
+- [https://docs.google.com/document/d/1ZPV8xQcqHGy1wmK4PivtXe\_0UTX1qs4vwYugpvR82fo/edit?tab=t.0\#heading=h.hwdt11ejduri](https://docs.google.com/document/d/1ZPV8xQcqHGy1wmK4PivtXe_0UTX1qs4vwYugpvR82fo/edit?tab=t.0#heading=h.hwdt11ejduri)  
+- [https://docs.google.com/presentation/d/1whyvTc-HmHIQoMQok2rVF6ahzuzkDI1A4BrMUjpHwMc/edit?slide=id.g2c2c9bf8b8\_0\_96\#slide=id.g2c2c9bf8b8\_0\_96](https://docs.google.com/presentation/d/1whyvTc-HmHIQoMQok2rVF6ahzuzkDI1A4BrMUjpHwMc/edit?slide=id.g2c2c9bf8b8_0_96#slide=id.g2c2c9bf8b8_0_96)  
+- [http://design.spectrum3847.org/](http://design.spectrum3847.org/)  
+- https://rb.gy/vsawem
+</USER_REQUEST>
+<ADDITIONAL_METADATA>
+The current local time is: 2026-05-28T09:31:15-04:00.
+</ADDITIONAL_METADATA>
+<USER_SETTINGS_CHANGE>
+The user changed setting `Model Selection` from Gemini 3.5 Flash (Low) to Gemini 3.1 Pro (High). No need to comment on this change if the user doesn't ask about it. If reporting what model you are, please use a human readable name instead of the exact string.
+</USER_SETTINGS_CHANGE>
