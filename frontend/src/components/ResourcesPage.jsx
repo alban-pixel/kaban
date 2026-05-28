@@ -230,6 +230,33 @@ export default function ResourcesPage() {
     { size: 'M8', pitch: '1.25 mm', drillTight: '8.20 mm', drillFree: '9.00 mm', tapDrill: '6.80 mm' },
   ];
 
+  const linksData = [
+    { 
+      category: "Raccourcis Officiels FRC 2026", 
+      items: [
+        { name: "2026 Official PDF Manual", url: "https://firstfrc.blob.core.windows.net/frc2026/Manual/2026FRCGameManual.pdf", desc: "Le manuel de jeu officiel complet en version PDF." },
+        { name: "2026 Unofficial Web Manual", url: "https://frc-manual.recg.org/", desc: "Version web rapide et ergonomique du manuel, idéale pour mobile ou tablette." },
+        { name: "2026 Q&A", url: "https://frc-qa.firstinspires.org/", desc: "Forum officiel des questions/réponses de règlement par les arbitres (FIRST)." }
+      ]
+    },
+    { 
+      category: "Ressources & Recherches", 
+      items: [
+        { name: "FRC Resources", url: "https://www.firstinspires.org/resource-library/frc/technical-resources", desc: "Bibliothèque officielle des documentations techniques et règlements de sécurité." },
+        { name: "2026 Team/Event Search", url: "https://www.firstinspires.org/team-event-search", desc: "Recherchez des équipes, des compétitions et des résultats en direct." },
+        { name: "2026 FRC-Events", url: "https://frc-events.firstinspires.org/", desc: "Portail officiel de classement mondial et statistiques des matches en cours." }
+      ]
+    },
+    { 
+      category: "Communauté & Conception", 
+      items: [
+        { name: "Open Alliance", url: "https://www.theopenalliance.com/", desc: "Alliance d'équipes partageant leurs conceptions CAD (Onshape) et codes en temps réel tout au long de la saison." },
+        { name: "Chief Delphi Forum", url: "https://www.chiefdelphi.com/", desc: "Le forum communautaire mondial de discussion technique et stratégique FRC." },
+        { name: "ReCalc Original Web", url: "https://recalc.apetech.co/", desc: "L'outil web de référence d'analyse des mécanismes de transmission FRC." }
+      ]
+    }
+  ];
+
   return (
     <div style={styles.container}>
       {/* Header Banner */}
