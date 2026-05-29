@@ -2,6 +2,7 @@ import sqlite3 from 'sqlite3';
 import { open } from 'sqlite';
 import path from 'path';
 import { fileURLToPath } from 'url';
+import bcrypt from 'bcryptjs';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const dbPath = path.resolve(__dirname, 'kanban.db');
@@ -170,6 +171,21 @@ export async function getDatabase() {
       FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
     );
   `);
+
+  // Seed admin user nayl / 123456 if not exists
+  try {
+    const adminUser = await db.get("SELECT id FROM users WHERE username = 'nayl'");
+    if (!adminUser) {
+      const hash = await bcrypt.hash('123456', 10);
+      await db.run(
+        "INSERT INTO users (username, password_hash, display_name, avatar_color, role) VALUES (?, ?, ?, ?, ?)",
+        ['nayl', hash, 'Nayl', '#cf2737', 'admin']
+      );
+      console.log("Admin user 'nayl' created successfully!");
+    }
+  } catch (e) {
+    console.error("Error seeding admin user 'nayl':", e);
+  }
 
   console.log(`SQLite database connected & initialized at: ${dbPath}`);
   return db;

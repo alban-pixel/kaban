@@ -8,7 +8,7 @@ import {
 } from 'lucide-react';
 
 export default function Sidebar({ activeBoardId, onSelectBoard }) {
-  const { user, logout, theme, toggleTheme } = useAuth();
+  const { user, logout, theme, toggleTheme, connectedUsers } = useAuth();
   
   // Navigation structure state
   const [navigation, setNavigation] = useState([]);
@@ -28,6 +28,58 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
   
   const [showAddBoard, setShowAddBoard] = useState(null); // { projectID, folderID } if open
   const [newBoardName, setNewBoardName] = useState('');
+
+  // Hover state tracking
+  const [hoveredItemId, setHoveredItemId] = useState(null);
+
+  // Editing rename states
+  const [editingProjectId, setEditingProjectId] = useState(null);
+  const [editProjectName, setEditProjectName] = useState('');
+  
+  const [editingFolderId, setEditingFolderId] = useState(null);
+  const [editFolderName, setEditFolderName] = useState('');
+  
+  const [editingBoardId, setEditingBoardId] = useState(null);
+  const [editBoardName, setEditBoardName] = useState('');
+
+  const handleRenameProject = async (e, projectId) => {
+    e.preventDefault();
+    if (!editProjectName.trim()) return;
+    try {
+      await api.updateProject(projectId, { name: editProjectName.trim() });
+      setEditingProjectId(null);
+      await loadNavigation();
+    } catch (err) {
+      alert("Erreur lors de la modification du projet.");
+    }
+  };
+
+  const handleRenameFolder = async (e, folderId) => {
+    e.preventDefault();
+    if (!editFolderName.trim()) return;
+    try {
+      await api.updateFolder(folderId, { name: editFolderName.trim() });
+      setEditingFolderId(null);
+      await loadNavigation();
+    } catch (err) {
+      alert("Erreur lors de la modification du dossier.");
+    }
+  };
+
+  const handleRenameBoard = async (e, board) => {
+    e.preventDefault();
+    if (!editBoardName.trim()) return;
+    try {
+      await api.updateBoard(board.id, { name: editBoardName.trim() });
+      setEditingBoardId(null);
+      await loadNavigation();
+      if (activeBoardId === board.id) {
+        onSelectBoard(board.id, editBoardName.trim());
+      }
+    } catch (err) {
+      alert("Erreur lors de la modification du tableau.");
+    }
+  };
 
   // Load complete navigation tree
   const loadNavigation = async (selectDefault = false) => {
@@ -238,7 +290,12 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
             if (search && filteredBoards.length === 0 && filteredFolders.length === 0) return null;
 
             return (
-              <div key={project.id} style={styles.projectWrapper}>
+              <div 
+                key={project.id} 
+                style={styles.projectWrapper}
+                onMouseEnter={() => setHoveredItemId(`project-${project.id}`)}
+                onMouseLeave={() => setHoveredItemId(null)}
+              >
                 {/* Project Header Row */}
                 <div 
                   onClick={() => toggleProject(project.id)}
@@ -246,12 +303,42 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
                 >
                   <div style={styles.rowLeft}>
                     {isProjectExpanded ? <ChevronDown size={14} /> : <ChevronRight size={14} />}
-                    <span style={styles.projectName}>{project.name}</span>
+                    {editingProjectId === project.id ? (
+                      <form 
+                        onSubmit={(e) => handleRenameProject(e, project.id)}
+                        onClick={(e) => e.stopPropagation()}
+                        style={{ display: 'inline-flex' }}
+                      >
+                        <input
+                          type="text"
+                          value={editProjectName}
+                          onChange={(e) => setEditProjectName(e.target.value)}
+                          style={styles.renameInput}
+                          autoFocus
+                          onBlur={() => setEditingProjectId(null)}
+                        />
+                      </form>
+                    ) : (
+                      <span style={styles.projectName}>{project.name}</span>
+                    )}
                     {project.is_private === 1 && (
                       <Lock size={12} style={{ color: 'var(--brand-red)', marginLeft: '6px' }} title="Projet Privé" />
                     )}
                   </div>
-                  <div style={styles.actionsGroup}>
+                  <div style={{
+                    ...styles.actionsGroup,
+                    opacity: hoveredItemId === `project-${project.id}` ? 1 : 0
+                  }}>
+                    <Edit2 
+                      size={13} 
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        setEditingProjectId(project.id);
+                        setEditProjectName(project.name);
+                      }} 
+                      style={styles.actionIcon}
+                      title="Renommer le projet"
+                    />
                     <Plus 
                       size={14} 
                       title="Nouveau Dossier / Tableau" 
@@ -324,7 +411,12 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
                     {filteredFolders.map(folder => {
                       const isFolderExpanded = expandedFolders[folder.id] !== false;
                       return (
-                        <div key={folder.id} style={styles.folderWrapper}>
+                        <div 
+                          key={folder.id} 
+                          style={styles.folderWrapper}
+                          onMouseEnter={() => setHoveredItemId(`folder-${folder.id}`)}
+                          onMouseLeave={() => setHoveredItemId(null)}
+                        >
                           {/* Folder Header */}
                           <div 
                             onClick={() => toggleFolder(folder.id)}
@@ -332,9 +424,39 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
                           >
                             <div style={styles.rowLeft}>
                               {isFolderExpanded ? <FolderOpen size={13} style={styles.folderIcon} /> : <Folder size={13} style={styles.folderIcon} />}
-                              <span style={styles.folderName}>{folder.name}</span>
+                              {editingFolderId === folder.id ? (
+                                <form 
+                                  onSubmit={(e) => handleRenameFolder(e, folder.id)}
+                                  onClick={(e) => e.stopPropagation()}
+                                  style={{ display: 'inline-flex' }}
+                                >
+                                  <input
+                                    type="text"
+                                    value={editFolderName}
+                                    onChange={(e) => setEditFolderName(e.target.value)}
+                                    style={styles.renameInput}
+                                    autoFocus
+                                    onBlur={() => setEditingFolderId(null)}
+                                  />
+                                </form>
+                              ) : (
+                                <span style={styles.folderName}>{folder.name}</span>
+                              )}
                             </div>
-                            <div style={styles.actionsGroup}>
+                            <div style={{
+                              ...styles.actionsGroup,
+                              opacity: hoveredItemId === `folder-${folder.id}` ? 1 : 0
+                            }}>
+                              <Edit2 
+                                size={12} 
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setEditingFolderId(folder.id);
+                                  setEditFolderName(folder.name);
+                                }} 
+                                style={styles.actionIcon}
+                                title="Renommer le dossier"
+                              />
                               <Plus 
                                 size={12} 
                                 title="Nouveau tableau dans ce dossier"
@@ -378,6 +500,8 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
                                 <div
                                   key={board.id}
                                   onClick={() => onSelectBoard(board.id, board.name)}
+                                  onMouseEnter={() => setHoveredItemId(`board-${board.id}`)}
+                                  onMouseLeave={() => setHoveredItemId(null)}
                                   style={{
                                     ...styles.boardItem,
                                     backgroundColor: activeBoardId === board.id ? 'var(--bg-sidebar-active)' : 'transparent',
@@ -386,17 +510,50 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
                                 >
                                   <div style={styles.rowLeft}>
                                     <Layout size={12} style={styles.boardIcon} />
-                                    <span style={{
-                                      ...styles.boardName,
-                                      color: activeBoardId === board.id ? '#ffffff' : 'var(--text-sidebar-muted)',
-                                      fontWeight: activeBoardId === board.id ? '600' : '400'
-                                    }}>{board.name}</span>
+                                    {editingBoardId === board.id ? (
+                                      <form 
+                                        onSubmit={(e) => handleRenameBoard(e, board)}
+                                        onClick={(e) => e.stopPropagation()}
+                                        style={{ display: 'inline-flex' }}
+                                      >
+                                        <input
+                                          type="text"
+                                          value={editBoardName}
+                                          onChange={(e) => setEditBoardName(e.target.value)}
+                                          style={styles.renameInput}
+                                          autoFocus
+                                          onBlur={() => setEditingBoardId(null)}
+                                        />
+                                      </form>
+                                    ) : (
+                                      <span style={{
+                                        ...styles.boardName,
+                                        color: activeBoardId === board.id ? '#ffffff' : 'var(--text-sidebar-muted)',
+                                        fontWeight: activeBoardId === board.id ? '600' : '400'
+                                      }}>{board.name}</span>
+                                    )}
                                   </div>
-                                  <Trash 
-                                    size={10} 
-                                    onClick={(e) => handleDeleteBoard(board.id, e)} 
-                                    style={styles.deleteIconItem}
-                                  />
+                                  <div style={{
+                                    display: (hoveredItemId === `board-${board.id}` || activeBoardId === board.id) ? 'flex' : 'none',
+                                    alignItems: 'center',
+                                    gap: '6px'
+                                  }}>
+                                    <Edit2 
+                                      size={11} 
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setEditingBoardId(board.id);
+                                        setEditBoardName(board.name);
+                                      }} 
+                                      style={{ ...styles.actionIcon, color: activeBoardId === board.id ? '#ffffff' : 'var(--text-sidebar-muted)' }}
+                                      title="Renommer le tableau"
+                                    />
+                                    <Trash 
+                                      size={10} 
+                                      onClick={(e) => handleDeleteBoard(board.id, e)} 
+                                      style={{ ...styles.deleteIcon, color: activeBoardId === board.id ? '#ffffff' : 'rgba(239, 68, 68, 0.8)' }}
+                                    />
+                                  </div>
                                 </div>
                               ))}
                               {(!folder.boards || folder.boards.length === 0) && (
@@ -413,6 +570,8 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
                       <div
                         key={board.id}
                         onClick={() => onSelectBoard(board.id, board.name)}
+                        onMouseEnter={() => setHoveredItemId(`board-${board.id}`)}
+                        onMouseLeave={() => setHoveredItemId(null)}
                         style={{
                           ...styles.boardItemDirect,
                           backgroundColor: activeBoardId === board.id ? 'var(--bg-sidebar-active)' : 'transparent',
@@ -421,17 +580,50 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
                       >
                         <div style={styles.rowLeft}>
                           <Layout size={12} style={styles.boardIcon} />
-                          <span style={{
-                            ...styles.boardNameDirect,
-                            color: activeBoardId === board.id ? '#ffffff' : 'var(--text-sidebar-muted)',
-                            fontWeight: activeBoardId === board.id ? '600' : '400'
-                          }}>{board.name}</span>
+                          {editingBoardId === board.id ? (
+                            <form 
+                              onSubmit={(e) => handleRenameBoard(e, board)}
+                              onClick={(e) => e.stopPropagation()}
+                              style={{ display: 'inline-flex' }}
+                            >
+                              <input
+                                type="text"
+                                value={editBoardName}
+                                onChange={(e) => setEditBoardName(e.target.value)}
+                                style={styles.renameInput}
+                                autoFocus
+                                onBlur={() => setEditingBoardId(null)}
+                              />
+                            </form>
+                          ) : (
+                            <span style={{
+                              ...styles.boardNameDirect,
+                              color: activeBoardId === board.id ? '#ffffff' : 'var(--text-sidebar-muted)',
+                              fontWeight: activeBoardId === board.id ? '600' : '400'
+                            }}>{board.name}</span>
+                          )}
                         </div>
-                        <Trash 
-                          size={10} 
-                          onClick={(e) => handleDeleteBoard(board.id, e)} 
-                          style={styles.deleteIconItem}
-                        />
+                        <div style={{
+                          display: (hoveredItemId === `board-${board.id}` || activeBoardId === board.id) ? 'flex' : 'none',
+                          alignItems: 'center',
+                          gap: '6px'
+                        }}>
+                          <Edit2 
+                            size={11} 
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setEditingBoardId(board.id);
+                              setEditBoardName(board.name);
+                            }} 
+                            style={{ ...styles.actionIcon, color: activeBoardId === board.id ? '#ffffff' : 'var(--text-sidebar-muted)' }}
+                            title="Renommer le tableau"
+                          />
+                          <Trash 
+                            size={10} 
+                            onClick={(e) => handleDeleteBoard(board.id, e)} 
+                            style={{ ...styles.deleteIcon, color: activeBoardId === board.id ? '#ffffff' : 'rgba(239, 68, 68, 0.8)' }}
+                          />
+                        </div>
                       </div>
                     ))}
 
@@ -502,6 +694,29 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
           </div>
         </div>
       )}
+
+      {/* Connected Users Section */}
+      <div style={styles.onlineSection}>
+        <div style={styles.onlineHeader}>
+          <span style={styles.onlineDot}></span>
+          <span style={styles.onlineTitle}>En ligne ({connectedUsers.length})</span>
+        </div>
+        <div style={styles.onlineList}>
+          {connectedUsers.map((u) => (
+            <div key={u.id} style={styles.onlineUserItem} title={u.display_name}>
+              <div style={{ ...styles.onlineAvatar, backgroundColor: u.avatar_color }}>
+                {u.display_name.charAt(0).toUpperCase()}
+              </div>
+              <span style={styles.onlineUserName}>{u.display_name}</span>
+            </div>
+          ))}
+          {connectedUsers.length === 0 && (
+            <div style={{ fontSize: '0.75rem', color: 'var(--text-sidebar-muted)', fontStyle: 'italic', paddingLeft: '4px' }}>
+              Aucun utilisateur connecté
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Sidebar Footer Controls */}
       <div style={styles.sidebarFooter}>
@@ -969,5 +1184,74 @@ const styles = {
     justifyContent: 'flex-end',
     gap: '10px',
     marginTop: '6px'
+  },
+  renameInput: {
+    backgroundColor: 'rgba(0, 0, 0, 0.2)',
+    border: '1px solid var(--brand-red)',
+    color: '#ffffff',
+    fontSize: '0.8rem',
+    padding: '2px 6px',
+    borderRadius: '4px',
+    width: '120px',
+    outline: 'none'
+  },
+  onlineSection: {
+    padding: '10px 14px',
+    borderTop: '1px solid var(--border-sidebar)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '8px',
+    backgroundColor: 'rgba(255, 255, 255, 0.01)'
+  },
+  onlineHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '6px'
+  },
+  onlineDot: {
+    width: '8px',
+    height: '8px',
+    backgroundColor: '#10b981',
+    borderRadius: '50%',
+    display: 'inline-block',
+    boxShadow: '0 0 0 2px rgba(16, 185, 129, 0.4)',
+    animation: 'pulseGreen 2s infinite'
+  },
+  onlineTitle: {
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    color: 'var(--text-sidebar-muted)',
+    textTransform: 'uppercase',
+    letterSpacing: '0.5px'
+  },
+  onlineList: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px',
+    maxHeight: '120px',
+    overflowY: 'auto'
+  },
+  onlineUserItem: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: '8px',
+    padding: '2px 4px'
+  },
+  onlineAvatar: {
+    width: '24px',
+    height: '24px',
+    borderRadius: '50%',
+    color: '#ffffff',
+    fontSize: '0.75rem',
+    fontWeight: '700',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    border: '1px solid rgba(255, 255, 255, 0.1)'
+  },
+  onlineUserName: {
+    fontSize: '0.8rem',
+    color: 'var(--text-sidebar)',
+    fontWeight: '500'
   }
 };

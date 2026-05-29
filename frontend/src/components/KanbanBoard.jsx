@@ -22,6 +22,7 @@ export default function KanbanBoard({ boardId, boardName, onOpenCard }) {
   // Card Add states (per list)
   const [addingCardToList, setAddingCardToList] = useState(null); // listId if active
   const [newCardTitle, setNewCardTitle] = useState('');
+  const [showAddCardModal, setShowAddCardModal] = useState(false);
 
   // Filter & Search states
   const [searchQuery, setSearchQuery] = useState('');
@@ -149,6 +150,7 @@ export default function KanbanBoard({ boardId, boardName, onOpenCard }) {
       }));
       setNewCardTitle('');
       setAddingCardToList(null);
+      setShowAddCardModal(false);
       onOpenCard(newCard.id); // Instantly open card modal on creation
     } catch (err) {
       alert("Erreur de création de carte.");
@@ -441,38 +443,16 @@ export default function KanbanBoard({ boardId, boardName, onOpenCard }) {
                   </div>
 
                   {/* Add card button */}
-                  {addingCardToList === list.id ? (
-                    <form 
-                      onSubmit={(e) => handleAddCard(e, list.id)}
-                      style={styles.addCardForm}
-                    >
-                      <input
-                        type="text"
-                        value={newCardTitle}
-                        onChange={(e) => setNewCardTitle(e.target.value)}
-                        placeholder="Saisir un titre..."
-                        style={styles.addCardInput}
-                        autoFocus
-                      />
-                      <div style={styles.addCardActions}>
-                        <button type="submit" style={styles.btnSmallOk}>OK</button>
-                        <button 
-                          type="button" 
-                          onClick={() => { setAddingCardToList(null); setNewCardTitle(''); }} 
-                          style={styles.btnSmallCancel}
-                        >
-                          X
-                        </button>
-                      </div>
-                    </form>
-                  ) : (
-                    <button 
-                      onClick={() => setAddingCardToList(list.id)}
-                      style={styles.addCardBtn}
-                    >
-                      <Plus size={16} /> Ajouter une carte
-                    </button>
-                  )}
+                  <button 
+                    onClick={() => {
+                      setAddingCardToList(list.id);
+                      setNewCardTitle('');
+                      setShowAddCardModal(true);
+                    }}
+                    style={styles.addCardBtn}
+                  >
+                    <Plus size={16} /> Ajouter une carte
+                  </button>
                 </div>
               );
             })}
@@ -511,6 +491,58 @@ export default function KanbanBoard({ boardId, boardName, onOpenCard }) {
           </div>
         )}
       </div>
+
+      {/* Add Card Modal */}
+      {showAddCardModal && (
+        <div style={styles.modalOverlay} onClick={() => { setShowAddCardModal(false); setAddingCardToList(null); }}>
+          <div 
+            className="glass-panel animate-modal" 
+            style={styles.modalCard}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={styles.modalHeader}>
+              <h3 style={styles.modalTitle}>Ajouter une carte</h3>
+              <button 
+                onClick={() => { setShowAddCardModal(false); setAddingCardToList(null); }} 
+                style={styles.modalCloseBtn}
+              >
+                <X size={18} />
+              </button>
+            </div>
+            <form onSubmit={(e) => handleAddCard(e, addingCardToList)} style={styles.modalForm}>
+              <div style={styles.formGroup}>
+                <label style={styles.modalLabel}>Titre de la carte</label>
+                <input
+                  type="text"
+                  value={newCardTitle}
+                  onChange={(e) => setNewCardTitle(e.target.value)}
+                  placeholder="ex. Concevoir le support de capteur"
+                  style={styles.modalInput}
+                  autoFocus
+                  required
+                />
+              </div>
+              <div style={styles.modalActions}>
+                <button 
+                  type="button" 
+                  onClick={() => { setShowAddCardModal(false); setAddingCardToList(null); }} 
+                  className="btn-secondary"
+                  style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                >
+                  Annuler
+                </button>
+                <button 
+                  type="submit" 
+                  className="btn-primary"
+                  style={{ padding: '8px 16px', fontSize: '0.9rem' }}
+                >
+                  Créer la carte
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -923,5 +955,76 @@ const styles = {
   addListActions: {
     display: 'flex',
     gap: '8px'
+  },
+  modalOverlay: {
+    position: 'fixed',
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backdropFilter: 'blur(5px)',
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 9999,
+    padding: '1rem'
+  },
+  modalCard: {
+    width: '100%',
+    maxWidth: '400px',
+    backgroundColor: 'var(--bg-modal)',
+    borderRadius: 'var(--border-radius-lg)',
+    padding: '1.5rem',
+    boxShadow: 'var(--shadow-premium)',
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '14px',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-main)'
+  },
+  modalHeader: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    borderBottom: '1px solid var(--border-color)',
+    paddingBottom: '8px'
+  },
+  modalTitle: {
+    fontSize: '1.15rem',
+    fontWeight: '600'
+  },
+  modalCloseBtn: {
+    color: 'var(--text-muted)',
+    cursor: 'pointer'
+  },
+  modalForm: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '12px'
+  },
+  formGroup: {
+    display: 'flex',
+    flexDirection: 'column',
+    gap: '6px'
+  },
+  modalLabel: {
+    fontSize: '0.8rem',
+    fontWeight: '600',
+    color: 'var(--text-muted)'
+  },
+  modalInput: {
+    backgroundColor: 'var(--bg-input)',
+    border: '1px solid var(--border-color)',
+    color: 'var(--text-main)',
+    padding: '10px 12px',
+    borderRadius: 'var(--border-radius-sm)',
+    fontSize: '0.9rem'
+  },
+  modalActions: {
+    display: 'flex',
+    justifyContent: 'flex-end',
+    gap: '10px',
+    marginTop: '6px'
   }
 };

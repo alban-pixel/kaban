@@ -64,13 +64,74 @@ export function AuthProvider({ children }) {
     }
   };
 
+  const [connectedUsers, setConnectedUsers] = useState([]);
+
+  useEffect(() => {
+    if (!user) {
+      setConnectedUsers([]);
+      return;
+    }
+
+    const wsProtocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const wsPort = window.location.port === '5173' ? ':3000' : (window.location.port ? `:${window.location.port}` : '');
+    const wsUrl = `${wsProtocol}//${window.location.hostname}${wsPort}`;
+
+    let socket = null;
+    let reconnectTimeout = null;
+    let isDisposed = false;
+
+    const connect = () => {
+      if (isDisposed) return;
+      socket = new WebSocket(wsUrl);
+
+      socket.onopen = () => {
+        const token = localStorage.getItem('stan_kanban_token');
+        if (token) {
+          socket.send(JSON.stringify({ type: 'auth', token }));
+        }
+      };
+
+      socket.onmessage = (event) => {
+        try {
+          const data = JSON.parse(event.data);
+          if (data.type === 'connected_users') {
+            setConnectedUsers(data.users);
+          }
+        } catch (e) {
+          console.error("WS error parsing message:", e);
+        }
+      };
+
+      socket.onclose = () => {
+        if (!isDisposed && localStorage.getItem('stan_kanban_token')) {
+          reconnectTimeout = setTimeout(() => {
+            connect();
+          }, 3000);
+        }
+      };
+
+      socket.onerror = (err) => {
+        console.error("WS connection error:", err);
+        socket.close();
+      };
+    };
+
+    connect();
+
+    return () => {
+      isDisposed = true;
+      if (reconnectTimeout) clearTimeout(reconnectTimeout);
+      if (socket) socket.close();
+    };
+  }, [user]);
+
   const logout = () => {
     localStorage.removeItem('stan_kanban_token');
     setUser(null);
   };
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, register, logout, theme, toggleTheme }}>
+    <AuthContext.Provider value={{ user, loading, login, register, logout, theme, toggleTheme, connectedUsers }}>
       {children}
     </AuthContext.Provider>
   );

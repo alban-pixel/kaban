@@ -7,6 +7,7 @@ import { fileURLToPath } from 'url';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import multer from 'multer';
+import { WebSocketServer } from 'ws';
 import { getDatabase } from './database.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
@@ -1120,10 +1121,10 @@ app.get('*', (req, res, next) => {
 });
 
 // ==========================================
-// SERVER INITIALIZATION
+// SERVER INITIALIZATION & WEBSOCKET SETUP
 // ==========================================
 
-app.listen(PORT, '0.0.0.0', () => {
+const server = app.listen(PORT, '0.0.0.0', () => {
   const localIps = getLocalIpAddresses();
   console.log(`\n==================================================`);
   console.log(`🚀 STAN ROBOTIX Kanban Server is running!`);
@@ -1140,3 +1141,72 @@ app.listen(PORT, '0.0.0.0', () => {
   }
   console.log(`==================================================\n`);
 });
+
+const wss = new WebSocketServer({ server });
+
+wss.on('connection', (ws) => {
+  let authenticatedUser = null;
+
+  ws.on('message', async (message) => {
+    try {
+      const data = JSON.parse(message);
+      if (data.type === 'auth') {
+        const decoded = jwt.verify(data.token, JWT_SECRET);
+        authenticatedUser = {
+          id: decoded.id,
+          username: decoded.username,
+          display_name: decoded.display_name,
+          avatar_color: '#cf2737'
+        };
+
+        // Fetch actual avatar color from db
+        const db = await getDatabase();
+        const user = await db.get('SELECT avatar_color FROM users WHERE id = ?', [decoded.id]);
+        if (user) {
+          authenticatedUser.avatar_color = user.avatar_color;
+        }
+
+        ws.user = authenticatedUser;
+        broadcastConnectedUsers();
+      }
+    } catch (err) {
+      console.error('WebSocket connection authentication error:', err);
+      ws.close();
+    }
+  });
+
+  ws.on('close', () => {
+    if (authenticatedUser) {
+      broadcastConnectedUsers();
+    }
+  });
+
+  ws.on('error', (err) => {
+    console.error('WebSocket client connection error:', err);
+  });
+});
+
+function broadcastConnectedUsers() {
+  const activeUsers = [];
+  const seenIds = new Set();
+
+  for (const client of wss.clients) {
+    if (client.readyState === 1 && client.user) { // ws.OPEN is 1
+      if (!seenIds.has(client.user.id)) {
+        seenIds.add(client.user.id);
+        activeUsers.push(client.user);
+      }
+    }
+  }
+
+  const broadcastMsg = JSON.stringify({
+    type: 'connected_users',
+    users: activeUsers
+  });
+
+  for (const client of wss.clients) {
+    if (client.readyState === 1) { // ws.OPEN is 1
+      client.send(broadcastMsg);
+    }
+  }
+}
