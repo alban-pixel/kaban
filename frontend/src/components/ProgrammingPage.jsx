@@ -53,7 +53,7 @@ double rotationSpeed = -m_driverController.GetRightX();`,
 m_driverController.A().OnTrue(
   IntakeCommand(&m_intake).ToPtr()
 );`,
-      desc: "Bouton d'action rapide principal. Idéal pour activer l'aspiration (Intake) ou descendre un élévateur à son preset le plus bas.",
+      desc: "Bouton d'action rapide principal. Classiquement mappé pour l'admission (Intake) ou des presets de basse altitude.",
       pos: "Face droite (Bas)"
     },
     buttonB: {
@@ -511,10 +511,27 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       </radialGradient>
                     </defs>
 
-                    {/* Câble */}
+                    {/* Câble (Background) */}
                     <path d="M 250 50 C 250 20, 270 10, 280 -10" fill="none" stroke="#222" strokeWidth="6" style={{ pointerEvents: 'none' }} />
 
-                    {/* Triggers & Bumpers */}
+                    {/* Grips Noirs (Background) */}
+                    <path d="M 100 150 C 50 180, 40 280, 60 310 C 80 340, 140 330, 160 250 C 170 200, 120 180, 100 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
+                    <path d="M 400 150 C 450 180, 460 280, 440 310 C 420 340, 360 330, 340 250 C 330 200, 380 180, 400 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
+
+                    {/* Corps principal bleu (Background) */}
+                    <path id="main-body" d="M 200 80 C 250 75, 250 75, 300 80 C 350 85, 380 100, 410 130 C 440 160, 450 220, 410 280 C 380 320, 340 330, 330 250 C 320 180, 280 180, 250 180 C 220 180, 180 180, 170 250 C 160 330, 120 320, 90 280 C 50 220, 60 160, 90 130 C 120 100, 150 85, 200 80 Z" fill="url(#body-grad)" stroke="#475569" strokeWidth="2" style={{ pointerEvents: 'none' }} />
+
+                    {/* Base noire centrale (Background) */}
+                    <path d="M 170 190 C 200 160, 300 160, 330 190 C 350 210, 340 260, 310 260 C 280 260, 270 230, 250 230 C 230 230, 220 260, 190 260 C 160 260, 150 210, 170 190 Z" fill="#151e2e" style={{ pointerEvents: 'none' }} />
+
+                    {/* Home / Mode Logo Button decoration (Background) */}
+                    <g id="btn-home" transform="translate(250, 140)" style={{ pointerEvents: 'none' }}>
+                      <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#475569" strokeWidth="1" />
+                      <circle cx="0" cy="0" r="10" fill="#0f172a" />
+                      <path d="M -4 -2 C -4 -4, -2 -6, 0 -6 C 2 -6, 4 -4, 4 -2 C 4 1, -4 4, -4 4 Z" fill="var(--brand-red)" />
+                    </g>
+
+                    {/* Triggers & Bumpers (Interactive - Rendered on top of main body) */}
                     {/* LB (Bumper Gauche) */}
                     <path 
                       id="lb" 
@@ -552,23 +569,10 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       onMouseLeave={() => setHoveredElement(null)}
                     />
 
-                    {/* Grips Noirs (Poignées) */}
-                    <path d="M 100 150 C 50 180, 40 280, 60 310 C 80 340, 140 330, 160 250 C 170 200, 120 180, 100 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
-                    <path d="M 400 150 C 450 180, 460 280, 440 310 C 420 340, 360 330, 340 250 C 330 200, 380 180, 400 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
-
-                    {/* Corps principal bleu */}
-                    <path id="main-body" d="M 200 80 C 250 75, 250 75, 300 80 C 350 85, 380 100, 410 130 C 440 160, 450 220, 410 280 C 380 320, 340 330, 330 250 C 320 180, 280 180, 250 180 C 220 180, 180 180, 170 250 C 160 330, 120 320, 90 280 C 50 220, 60 160, 90 130 C 120 100, 150 85, 200 80 Z" fill="url(#body-grad)" stroke="#475569" strokeWidth="2" style={{ pointerEvents: 'none' }} />
-
-                    {/* Base noire centrale */}
-                    <path d="M 170 190 C 200 160, 300 160, 330 190 C 350 210, 340 260, 310 260 C 280 260, 270 230, 250 230 C 230 230, 220 260, 190 260 C 160 260, 150 210, 170 190 Z" fill="#151e2e" style={{ pointerEvents: 'none' }} />
-
                     {/* D-Pad (POV) */}
                     <g 
                       id="dpad" 
                       transform="translate(140, 140)"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={() => setHoveredElement('dpad')}
-                      onMouseLeave={() => setHoveredElement(null)}
                     >
                       <circle cx="0" cy="0" r="35" fill={hoveredElement === 'dpad' ? 'var(--brand-red-alpha-20)' : '#232d3d'} style={{ pointerEvents: 'none' }} />
                       <path id="dpad-up" d="M -12 -30 L 12 -30 L 12 -12 L -12 -12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
@@ -576,6 +580,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       <path id="dpad-left" d="M -30 -12 L -12 -12 L -12 12 L -30 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
                       <path id="dpad-right" d="M 12 -12 L 30 -12 L 30 12 L 12 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
                       <rect x="-12" y="-12" width="24" height="24" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
+                      <circle cx="0" cy="0" r="35" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('dpad')} onMouseLeave={() => setHoveredElement(null)} />
                     </g>
 
                     {/* Joysticks Analogiques */}
@@ -583,9 +588,6 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                     <g 
                       id="left-stick" 
                       transform="translate(195, 220)"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={() => setHoveredElement('leftStick')}
-                      onMouseLeave={() => setHoveredElement(null)}
                     >
                       <circle cx="0" cy="0" r="28" fill="#0a0a0a" style={{ pointerEvents: 'none' }} />
                       <circle 
@@ -597,14 +599,12 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         strokeWidth={2}
                         style={{ pointerEvents: 'none' }}
                       />
+                      <circle cx="0" cy="0" r="28" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('leftStick')} onMouseLeave={() => setHoveredElement(null)} />
                     </g>
                     {/* Stick Droite */}
                     <g 
                       id="right-stick" 
                       transform="translate(305, 220)"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={() => setHoveredElement('rightStick')}
-                      onMouseLeave={() => setHoveredElement(null)}
                     >
                       <circle cx="0" cy="0" r="28" fill="#0a0a0a" style={{ pointerEvents: 'none' }} />
                       <circle 
@@ -616,54 +616,39 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         strokeWidth={2}
                         style={{ pointerEvents: 'none' }}
                       />
+                      <circle cx="0" cy="0" r="28" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('rightStick')} onMouseLeave={() => setHoveredElement(null)} />
                     </g>
 
                     {/* Action Buttons A, B, X, Y */}
                     <g id="action-buttons" transform="translate(365, 140)">
                       <circle cx="0" cy="0" r="42" fill="#232d3d" style={{ pointerEvents: 'none' }} />
                       {/* X (Bleu) */}
-                      <g 
-                        id="button-x"
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={() => setHoveredElement('buttonX')}
-                        onMouseLeave={() => setHoveredElement(null)}
-                      >
+                      <g id="button-x">
                         <circle cx="-24" cy="0" r="11" fill={hoveredElement === 'buttonX' ? 'var(--brand-red)' : '#0033cc'} style={{ pointerEvents: 'none' }} />
                         <circle cx="-24" cy="-1" r="8" fill={hoveredElement === 'buttonX' ? '#ef4444' : '#3366ff'} style={{ pointerEvents: 'none' }} />
                         <text x="-27" y="3" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>X</text>
+                        <circle cx="-24" cy="0" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonX')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                       {/* Y (Jaune) */}
-                      <g 
-                        id="button-y"
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={() => setHoveredElement('buttonY')}
-                        onMouseLeave={() => setHoveredElement(null)}
-                      >
+                      <g id="button-y">
                         <circle cx="0" cy="-24" r="11" fill={hoveredElement === 'buttonY' ? 'var(--brand-red)' : '#cc9900'} style={{ pointerEvents: 'none' }} />
                         <circle cx="0" cy="-25" r="8" fill={hoveredElement === 'buttonY' ? '#ef4444' : '#ffcc00'} style={{ pointerEvents: 'none' }} />
                         <text x="-3" y="-21" fill="#000" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>Y</text>
+                        <circle cx="0" cy="-24" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonY')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                       {/* B (Rouge) */}
-                      <g 
-                        id="button-b"
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={() => setHoveredElement('buttonB')}
-                        onMouseLeave={() => setHoveredElement(null)}
-                      >
+                      <g id="button-b">
                         <circle cx="24" cy="0" r="11" fill={hoveredElement === 'buttonB' ? 'var(--brand-red)' : '#cc0000'} style={{ pointerEvents: 'none' }} />
                         <circle cx="24" cy="-1" r="8" fill={hoveredElement === 'buttonB' ? '#ff6666' : '#ff3333'} style={{ pointerEvents: 'none' }} />
                         <text x="21" y="3" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>B</text>
+                        <circle cx="24" cy="0" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonB')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                       {/* A (Vert) */}
-                      <g 
-                        id="button-a"
-                        style={{ cursor: 'pointer' }}
-                        onMouseEnter={() => setHoveredElement('buttonA')}
-                        onMouseLeave={() => setHoveredElement(null)}
-                      >
+                      <g id="button-a">
                         <circle cx="0" cy="24" r="11" fill={hoveredElement === 'buttonA' ? 'var(--brand-red)' : '#008000'} style={{ pointerEvents: 'none' }} />
                         <circle cx="0" cy="23" r="8" fill={hoveredElement === 'buttonA' ? '#4ade80' : '#33cc33'} style={{ pointerEvents: 'none' }} />
                         <text x="-3" y="27" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>A</text>
+                        <circle cx="0" cy="24" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonA')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                     </g>
 
@@ -698,13 +683,6 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         onMouseLeave={() => setHoveredElement(null)}
                       />
                       <text x="287" y="142" fontSize="5" fill="#94a3b8" textAnchor="middle" fontFamily="sans-serif" style={{ pointerEvents: 'none' }}>START</text>
-                      
-                      {/* Home / Mode Logo Button */}
-                      <g id="btn-home" transform="translate(250, 140)">
-                        <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#475569" strokeWidth="1" style={{ pointerEvents: 'none' }} />
-                        <circle cx="0" cy="0" r="10" fill="#0f172a" style={{ pointerEvents: 'none' }} />
-                        <path d="M -4 -2 C -4 -4, -2 -6, 0 -6 C 2 -6, 4 -4, 4 -2 C 4 1, -4 4, -4 4 Z" fill="var(--brand-red)" style={{ pointerEvents: 'none' }} />
-                      </g>
                     </g>
                   </svg>
                 </div>
@@ -752,41 +730,11 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       <ellipse cx="250" cy="280" rx="35" ry="15" fill="#111" />
                     </g>
 
-                    {/* Boutons de la Base (Côté Gauche) */}
-                    <g 
-                      id="base-buttons" 
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={() => setHoveredElement('baseButtons')}
-                      onMouseLeave={() => setHoveredElement(null)}
-                    >
-                      <path id="base-btn-7" d="M 160 320 L 180 325 L 175 345 L 155 340 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
-                      <path id="base-btn-8" d="M 185 327 L 205 330 L 200 350 L 180 347 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
-                      <path id="base-btn-9" d="M 210 332 L 230 332 L 225 352 L 205 352 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
-                      
-                      <path id="base-btn-10" d="M 145 350 L 165 355 L 160 375 L 140 370 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
-                      <path id="base-btn-11" d="M 170 357 L 190 360 L 185 380 L 165 377 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
-                      <path id="base-btn-12" d="M 195 362 L 215 362 L 210 382 L 190 382 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
-                    </g>
-
-                    {/* Molette des gaz (Throttle) */}
-                    <g 
-                      id="throttle" 
-                      transform="translate(340, 350)"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={() => setHoveredElement('throttle')}
-                      onMouseLeave={() => setHoveredElement(null)}
-                    >
-                      <rect x="0" y="-15" width="20" height="40" rx="5" fill={hoveredElement === 'throttle' ? 'var(--brand-red)' : '#020617'} style={{ pointerEvents: 'none' }} />
-                      <path d="M 5 -10 L 15 -10 L 15 20 L 5 20 Z" fill="#475569" style={{ pointerEvents: 'none' }} />
-                      <rect x="-5" y="0" width="30" height="4" fill="#020617" style={{ pointerEvents: 'none' }} />
-                    </g>
+                    {/* Tête du Manche background */}
+                    <path d="M 170 80 C 160 60, 170 40, 200 30 C 240 20, 280 40, 290 60 C 290 80, 270 90, 250 90 C 210 90, 180 100, 170 80 Z" fill="#1e293b" stroke="#475569" strokeWidth={1} style={{ pointerEvents: 'none' }} />
 
                     {/* Stick Column */}
-                    <g 
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={() => setHoveredElement('stickY')}
-                      onMouseLeave={() => setHoveredElement(null)}
-                    >
+                    <g id="stick-column-group">
                       <path 
                         d="M 220 280 C 220 180, 180 150, 180 80 C 200 60, 240 50, 270 70 C 270 140, 280 180, 280 280 Z" 
                         fill={hoveredElement === 'stickY' || hoveredElement === 'stickX' || hoveredElement === 'stickZ' ? 'var(--brand-red-alpha-30)' : 'url(#stick-black)'} 
@@ -795,10 +743,52 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         style={{ transition: 'all 0.15s', pointerEvents: 'none' }}
                       />
                       <path d="M 275 240 C 310 240, 340 250, 340 260 C 340 270, 300 275, 275 275 Z" fill="#0f172a" style={{ pointerEvents: 'none' }} />
+                      {/* Transparent Hitbox */}
+                      <path 
+                        d="M 220 280 C 220 180, 180 150, 180 80 C 200 60, 240 50, 270 70 C 270 140, 280 180, 280 280 Z" 
+                        fill="transparent" 
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={() => setHoveredElement('stickY')}
+                        onMouseLeave={() => setHoveredElement(null)}
+                      />
                     </g>
 
-                    {/* Tête du Manche */}
-                    <path d="M 170 80 C 160 60, 170 40, 200 30 C 240 20, 280 40, 290 60 C 290 80, 270 90, 250 90 C 210 90, 180 100, 170 80 Z" fill="#1e293b" stroke="#475569" strokeWidth={1} style={{ pointerEvents: 'none' }} />
+                    {/* Boutons de la Base (Côté Gauche) */}
+                    <g id="base-buttons">
+                      <path id="base-btn-7" d="M 160 320 L 180 325 L 175 345 L 155 340 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-8" d="M 185 327 L 205 330 L 200 350 L 180 347 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-9" d="M 210 332 L 230 332 L 225 352 L 205 352 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      
+                      <path id="base-btn-10" d="M 145 350 L 165 355 L 160 375 L 140 370 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-11" d="M 170 357 L 190 360 L 185 380 L 165 377 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-12" d="M 195 362 L 215 362 L 210 382 L 190 382 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      
+                      {/* Unified transparent polygon hitbox covering all 6 buttons and gaps */}
+                      <polygon 
+                        points="140,350 160,320 230,332 215,382 140,370" 
+                        fill="transparent" 
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={() => setHoveredElement('baseButtons')}
+                        onMouseLeave={() => setHoveredElement(null)}
+                      />
+                    </g>
+
+                    {/* Molette des gaz (Throttle) */}
+                    <g id="throttle" transform="translate(340, 350)">
+                      <rect x="0" y="-15" width="20" height="40" rx="5" fill={hoveredElement === 'throttle' ? 'var(--brand-red)' : '#020617'} style={{ pointerEvents: 'none' }} />
+                      <path d="M 5 -10 L 15 -10 L 15 20 L 5 20 Z" fill="#475569" style={{ pointerEvents: 'none' }} />
+                      <rect x="-5" y="0" width="30" height="4" fill="#020617" style={{ pointerEvents: 'none' }} />
+                      <rect 
+                        x="-5" 
+                        y="-15" 
+                        width="30" 
+                        height="40" 
+                        fill="transparent" 
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={() => setHoveredElement('throttle')}
+                        onMouseLeave={() => setHoveredElement(null)}
+                      />
+                    </g>
 
                     {/* Gâchette Principale (Trigger) */}
                     <path 
@@ -826,16 +816,19 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                     />
 
                     {/* Chapeau multidirectionnel (POV / Hat Switch) */}
-                    <g 
-                      id="hat-switch" 
-                      transform="translate(220, 35)"
-                      style={{ cursor: 'pointer' }}
-                      onMouseEnter={() => setHoveredElement('hatSwitch')}
-                      onMouseLeave={() => setHoveredElement(null)}
-                    >
+                    <g id="hat-switch" transform="translate(220, 35)">
                       <circle cx="0" cy="0" r="16" fill={hoveredElement === 'hatSwitch' ? 'var(--brand-red)' : '#020617'} style={{ pointerEvents: 'none' }} />
                       <circle cx="0" cy="-2" r="12" fill="#475569" style={{ pointerEvents: 'none' }} />
                       <circle cx="0" cy="-4" r="8" fill="#0f172a" style={{ pointerEvents: 'none' }} />
+                      <circle 
+                        cx="0" 
+                        cy="0" 
+                        r="16" 
+                        fill="transparent" 
+                        style={{ cursor: 'pointer' }}
+                        onMouseEnter={() => setHoveredElement('hatSwitch')}
+                        onMouseLeave={() => setHoveredElement(null)}
+                      />
                     </g>
 
                     {/* Boutons supérieurs 3, 4, 5, 6 */}

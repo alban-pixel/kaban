@@ -3,11 +3,11 @@ import {
   Calculator, Settings, ShieldAlert, Compass, ExternalLink, 
   RefreshCw, Layers, CheckCircle2, Copy, FileText, HelpCircle, 
   Activity, Wrench, Shield, Link, HelpCircle as HelpIcon, Play,
-  Wind, CircleDot, Database, Bookmark, AlertTriangle
+  Wind, CircleDot, Database, Bookmark, AlertTriangle, Cpu
 } from 'lucide-react';
 
 export default function ResourcesPage() {
-  const [activeTab, setActiveTab] = useState('calculators'); // 'calculators' | 'info' | 'shortcuts'
+  const [activeTab, setActiveTab] = useState('calculators'); // 'calculators' | 'info' | 'shortcuts' | 'programming'
   const [activeCalc, setActiveCalc] = useState('gear'); // 'gear' | 'belt-chain' | 'pneumatics' | 'flywheel' | 'arm-elevator' | 'motor-playground'
 
   // --- 1. Gear Ratio Calculator State ---
@@ -254,18 +254,16 @@ export default function ResourcesPage() {
         { name: "Chief Delphi Forum", url: "https://www.chiefdelphi.com/", desc: "Le forum communautaire mondial de discussion technique et stratégique FRC." },
         { name: "ReCalc Original Web", url: "https://recalc.apetech.co/", desc: "L'outil web de référence d'analyse des mécanismes de transmission FRC." }
       ]
-    },
-    { 
-      category: "Programmation & API C++", 
-      items: [
-        { name: "Site Officiel STAN Robotix 6622", url: "https://www.stanrobotix6622.com", desc: "Le portail officiel de notre équipe, détaillant nos projets, notre histoire et nos robots." },
-        { name: "Pragmacube documentation", url: "https://pragmacube.github.io/", desc: "Portail de guides et ressources pragmatiques sur les architectures logicielles." },
-        { name: "GitHub STAN Robotix 6622", url: "https://github.com/stan-robotix-6622", desc: "Organisation GitHub officielle de l'équipe regroupant nos codes sources et projets mécatroniques." },
-        { name: "WPILib C++ Class Documentation", url: "https://github.wpilib.org/allwpilib/docs/release/cpp/index.html", desc: "La référence API C++ officielle et complète pour toutes les classes standards de la WPILib." },
-        { name: "REV Robotics C++ API Docs", url: "https://codedocs.revrobotics.com/cpp/index.html", desc: "Portail de référence C++ pour l'écosystème REV (contrôleurs Spark MAX et moteurs NEO)." },
-        { name: "CTRE Phoenix 6 C++ API Docs", url: "https://api.ctr-electronics.com/phoenix6/stable/cpp/", desc: "Documentation complète de l'API Phoenix 6 de CTR Electronics pour moteurs Kraken X60 et Falcon 500." }
-      ]
     }
+  ];
+
+  const programmingLinks = [
+    { name: "Site Officiel STAN Robotix 6622", url: "https://www.stanrobotix6622.com", desc: "Le portail officiel de notre équipe, détaillant nos projets, notre histoire et nos robots." },
+    { name: "Pragmacube documentation", url: "https://pragmacube.github.io/", desc: "Portail de guides et ressources pragmatiques sur les architectures logicielles." },
+    { name: "GitHub STAN Robotix 6622", url: "https://github.com/stan-robotix-6622", desc: "Organisation GitHub officielle de l'équipe regroupant nos codes sources et projets mécatroniques." },
+    { name: "WPILib C++ Class Documentation", url: "https://github.wpilib.org/allwpilib/docs/release/cpp/index.html", desc: "La référence API C++ officielle et complète pour toutes les classes standards de la WPILib." },
+    { name: "REV Robotics C++ API Docs", url: "https://codedocs.revrobotics.com/cpp/index.html", desc: "Portail de référence C++ pour l'écosystème REV (contrôleurs Spark MAX et moteurs NEO)." },
+    { name: "CTRE Phoenix 6 C++ API Docs", url: "https://api.ctr-electronics.com/phoenix6/stable/cpp/", desc: "Documentation complète de l'API Phoenix 6 de CTR Electronics pour moteurs Kraken X60 et Falcon 500." }
   ];
 
   return (
@@ -315,6 +313,17 @@ export default function ResourcesPage() {
           }}
         >
           <Bookmark size={16} /> Shortcuts & 2026 Manuals
+        </button>
+        <button 
+          onClick={() => setActiveTab('programming')}
+          style={{
+            ...styles.tabBtn,
+            borderBottom: activeTab === 'programming' ? '3px solid var(--brand-red)' : '3px solid transparent',
+            color: activeTab === 'programming' ? 'var(--text-main)' : 'var(--text-muted)',
+            fontWeight: activeTab === 'programming' ? '600' : '500'
+          }}
+        >
+          <Cpu size={16} /> Programmation
         </button>
       </div>
 
@@ -813,6 +822,52 @@ export default function ResourcesPage() {
                       </div>
                     ))}
                   </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* TAB 4: PROGRAMMING LINKS */}
+        {activeTab === 'programming' && (
+          <div style={styles.shortcutsContainer}>
+            <div style={styles.warningAlert}>
+              <Cpu size={18} style={{ color: 'var(--brand-red)' }} />
+              <span>
+                Documentations et APIs C++ de référence FRC pour le développement du robot (WPILib, REV, CTRE, etc.).
+              </span>
+            </div>
+
+            <div style={styles.linksGrid}>
+              {programmingLinks.map((link, lIdx) => (
+                <div key={lIdx} className="glass-panel" style={styles.categoryCard}>
+                  <div style={styles.linkHeader}>
+                    <span style={{ ...styles.linkLabel, color: 'var(--brand-red)', fontSize: '0.95rem' }}>{link.name}</span>
+                    <div style={styles.linkButtons}>
+                      <button 
+                        onClick={() => triggerCopy(link.url, link.name)} 
+                        style={styles.copyBtn}
+                        title="Copier le lien"
+                      >
+                        {copiedLink === link.name ? (
+                          <CheckCircle2 size={13} style={{ color: '#10b981' }} />
+                        ) : (
+                          <Copy size={13} />
+                        )}
+                      </button>
+                      <a 
+                        href={link.url} 
+                        target="_blank" 
+                        rel="noopener noreferrer" 
+                        style={styles.externalLink}
+                        title="Ouvrir le site"
+                      >
+                        <ExternalLink size={13} />
+                      </a>
+                    </div>
+                  </div>
+                  <p style={{ ...styles.linkDesc, marginTop: '8px', fontSize: '0.825rem' }}>{link.desc}</p>
+                  <span style={{ ...styles.linkUrlText, marginTop: '8px' }}>{link.url}</span>
                 </div>
               ))}
             </div>
