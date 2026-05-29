@@ -6,7 +6,6 @@ import {
 export default function ProgrammingPage() {
   const [activeTab, setActiveTab] = useState('mapping'); // 'mapping' | 'wiring'
   const [activeController, setActiveController] = useState('xbox'); // 'xbox' | 'joystick'
-  const [codeLang, setCodeLang] = useState('cpp'); // 'cpp' | 'java'
   
   // Hover details state
   const [hoveredElement, setHoveredElement] = useState(null);
@@ -18,210 +17,294 @@ export default function ProgrammingPage() {
     setTimeout(() => setCopiedCode(false), 2000);
   };
 
-  // 1. Xbox Controller Mappings
+  // 1. Xbox Controller Mappings (C++ FRC WPILib Command-Based)
   const xboxMappings = {
     leftStick: {
       name: "Stick Analogique Gauche",
       type: "Axes 0 (X) & 1 (Y) + Clic 9",
-      wpilibCpp: `// Déclaration\nfrc::XboxController controller{0};\n\n// Lecture des Axes\ndouble x = controller.GetLeftX();\ndouble y = controller.GetLeftY();\n\n// Lecture du Clic\nbool clicked = controller.GetLeftStickButton();`,
-      wpilibJava: `// Déclaration\nXboxController controller = new XboxController(0);\n\n// Lecture des Axes\ndouble x = controller.getLeftX();\ndouble y = controller.getLeftY();\n\n// Lecture du Clic\nboolean clicked = controller.getLeftStickButton();`,
-      desc: "Principalement utilisé pour le déplacement du robot. Dans WPILib, l'axe Y est inversé par défaut (l'avant donne une valeur négative, l'arrière est positif).",
+      wpilibCpp: `// Déclaration (dans RobotContainer.h)
+#include <frc2/command/button/CommandXboxController.h>
+frc2::CommandXboxController m_driverController{0};
+
+// Lecture de l'axe Y pour l'avance (DefaultDriveCommand.cpp)
+// Note: l'axe Y est inversé par défaut dans WPILib (Avant = négatif)
+double forwardSpeed = -m_driverController.GetLeftY();
+double strafeSpeed = -m_driverController.GetLeftX();`,
+      desc: "Principalement utilisé pour le déplacement du robot (Translations X/Y). L'axe Y est négatif vers l'avant, d'où la nécessité de l'inverser.",
       pos: "Milieu Gauche"
     },
     rightStick: {
       name: "Stick Analogique Droite",
       type: "Axes 4 (X) & 5 (Y) + Clic 10",
-      wpilibCpp: `// Déclaration\nfrc::XboxController controller{0};\n\n// Lecture des Axes\ndouble x = controller.GetRightX();\ndouble y = controller.GetRightY();\n\n// Lecture du Clic\nbool clicked = controller.GetRightStickButton();`,
-      wpilibJava: `// Déclaration\nXboxController controller = new XboxController(0);\n\n// Lecture des Axes\ndouble x = controller.getRightX();\ndouble y = controller.getRightY();\n\n// Lecture du Clic\nboolean clicked = controller.getRightStickButton();`,
-      desc: "Idéal pour l'orientation de tourelles, de bras pivotants, ou la rotation fine du châssis.",
+      wpilibCpp: `// Déclaration (dans RobotContainer.h)
+#include <frc2/command/button/CommandXboxController.h>
+frc2::CommandXboxController m_driverController{0};
+
+// Lecture de la rotation (Swerve Drive)
+double rotationSpeed = -m_driverController.GetRightX();`,
+      desc: "Idéal pour piloter la vitesse angulaire (rotation) en Swerve Drive ou pour orienter une tourelle articulée.",
       pos: "Bas Droite"
     },
     buttonA: {
       name: "Bouton A (Vert)",
       type: "Bouton 1",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetAButton();\n\n// Mode Command (C++)\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kA)\n    .OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getAButton();\n\n// Mode Command (Java)\ncontroller.a().onTrue(new MyCommand());`,
-      desc: "Bouton d'action rapide principal. Classiquement mappé pour l'admission (Intake) ou des presets de basse altitude.",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Déclenche l'aspiration lorsque A est pressé
+m_driverController.A().OnTrue(
+  IntakeCommand(&m_intake).ToPtr()
+);`,
+      desc: "Bouton d'action rapide principal. Idéal pour activer l'aspiration (Intake) ou descendre un élévateur à son preset le plus bas.",
       pos: "Face droite (Bas)"
     },
     buttonB: {
       name: "Bouton B (Rouge)",
       type: "Bouton 2",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetBButton();\n\n// Mode Command (C++)\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kB)\n    .OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getBButton();\n\n// Mode Command (Java)\ncontroller.b().onTrue(new MyCommand());`,
-      desc: "Utilisé pour des mécanismes secondaires ou pour annuler immédiatement l'exécution des commandes actives.",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Arrête tous les moteurs d'aspiration/lancement immédiatement
+m_driverController.B().OnTrue(
+  frc2::InstantCommand([this] { m_intake.Stop(); m_shooter.Stop(); }, {&m_intake, &m_shooter}).ToPtr()
+);`,
+      desc: "Utilisé pour des mécanismes secondaires ou pour couper immédiatement l'exécution des commandes actives (Emergency Stop).",
       pos: "Face droite (Droite)"
     },
     buttonX: {
       name: "Bouton X (Bleu)",
       type: "Bouton 3",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetXButton();\n\n// Mode Command (C++)\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kX)\n    .OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getXButton();\n\n// Mode Command (Java)\ncontroller.x().onTrue(new MyCommand());`,
-      desc: "Idéal pour lancer l'accélération d'un volant de tir (Shooter spin-up) ou l'activation de presets.",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Lance le volant du tireur (Shooter spin-up)
+m_driverController.X().OnTrue(
+  PrepareShooterCommand(&m_shooter).ToPtr()
+);`,
+      desc: "Idéal pour lancer l'accélération d'un volant de tir (Shooter spin-up) ou pour enclencher une commande de visée automatique.",
       pos: "Face droite (Gauche)"
     },
     buttonY: {
       name: "Bouton Y (Jaune)",
       type: "Bouton 4",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetYButton();\n\n// Mode Command (C++)\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kY)\n    .OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getYButton();\n\n// Mode Command (Java)\ncontroller.y().onTrue(new MyCommand());`,
-      desc: "Classiquement assigné au déploiement du grimpeur (Climber) ou pour amener le robot à sa hauteur maximale.",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Déploie les vérins du grimpeur (Climber)
+m_driverController.Y().OnTrue(
+  ClimbDeployCommand(&m_climber).ToPtr()
+);`,
+      desc: "Classiquement assigné au déploiement du grimpeur (Climber) ou pour élever le robot en fin de match.",
       pos: "Face droite (Haut)"
     },
     leftBumper: {
       name: "Gâchette Haute Gauche (LB)",
       type: "Bouton 5",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetLeftBumperButton();\n\n// Mode Command\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kLeftBumper)\n    .OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getLeftBumperButton();\n\n// Mode Command\ncontroller.leftBumper().onTrue(new MyCommand());`,
-      desc: "Bouton ON/OFF rapide. Souvent utilisé pour inverser le sens de l'intake en cas de bourrage (Eject).",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Inverse le sens de l'intake tant que le bouton est maintenu (Eject)
+m_driverController.LeftBumper().WhileTrue(
+  EjectCommand(&m_intake).ToPtr()
+);`,
+      desc: "Bouton ON/OFF rapide. Très utilisé pour inverser le sens de l'intake en cas de bourrage de note ou de cube.",
       pos: "Bumper Gauche"
     },
     rightBumper: {
       name: "Gâchette Haute Droite (RB)",
       type: "Bouton 6",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetRightBumperButton();\n\n// Mode Command\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kRightBumper)\n    .OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getRightBumperButton();\n\n// Mode Command\ncontroller.rightBumper().onTrue(new MyCommand());`,
-      desc: "Bouton ON/OFF rapide. Souvent configuré comme gâchette d'activation finale de tir (Shoot trigger).",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Relâche le projectile (Trigger final de tir)
+m_driverController.RightBumper().OnTrue(
+  FeedToShooterCommand(&m_feeder).ToPtr()
+);`,
+      desc: "Bouton ON/OFF rapide. Généralement configuré comme le déclencheur final pour libérer le projectile vers le shooter.",
       pos: "Bumper Droite"
     },
     leftTrigger: {
       name: "Gâchette Basse Gauche (LT)",
       type: "Axe 2",
-      wpilibCpp: `// Lecture analogique (0.0 à 1.0)\ndouble value = controller.GetLeftTriggerAxis();\n\n// Mode Command avec seuil\ncontroller.LeftTrigger(0.5, &eventLoop).OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture analogique (0.0 à 1.0)\ndouble value = controller.getLeftTriggerAxis();\n\n// Mode Command avec seuil\ncontroller.leftTrigger(0.5).onTrue(new MyCommand());`,
-      desc: "Axe analogique très fluide. Pratique pour moduler la vitesse d'admission ou doser l'accélération progressive.",
+      wpilibCpp: `// Lecture analogique (0.0 à 1.0)
+double triggerVal = m_driverController.GetLeftTriggerAxis();
+
+// Liaison Command-Based avec un seuil de déclenchement
+m_driverController.LeftTrigger(0.5).OnTrue(
+  SlowModeCommand(&m_drivetrain).ToPtr()
+);`,
+      desc: "Axe analogique très fluide. Pratique pour moduler la vitesse d'admission ou pour activer dynamiquement un mode de précision lente.",
       pos: "Arrière Gauche"
     },
     rightTrigger: {
       name: "Gâchette Basse Droite (RT)",
       type: "Axe 3",
-      wpilibCpp: `// Lecture analogique (0.0 à 1.0)\ndouble value = controller.GetRightTriggerAxis();\n\n// Mode Command avec seuil\ncontroller.RightTrigger(0.5, &eventLoop).OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture analogique (0.0 à 1.0)\ndouble value = controller.getRightTriggerAxis();\n\n// Mode Command avec seuil\ncontroller.rightTrigger(0.5).onTrue(new MyCommand());`,
-      desc: "Axe analogique. Utile pour la conduite progressive ou pour doser la puissance et l'inclinaison d'un lanceur.",
+      wpilibCpp: `// Lecture analogique (0.0 à 1.0)
+double force = m_driverController.GetRightTriggerAxis();
+
+// Liaison Command-Based avec un seuil de déclenchement (RT enfoncé à plus de 40%)
+m_driverController.RightTrigger(0.4).WhileTrue(
+  AimAndLockCommand(&m_drivetrain, &m_vision).ToPtr()
+);`,
+      desc: "Axe analogique. Utile pour la conduite progressive ou pour activer le verrouillage de cible par vision de manière analogique.",
       pos: "Arrière Droite"
     },
     dpad: {
       name: "Croix Directionnelle (D-Pad)",
       type: "Angles POV",
-      wpilibCpp: `// Lecture de l'angle (0 = Haut, 90 = Droite, 180 = Bas, 270 = Gauche, -1 = Relâché)\nint angle = controller.GetPOV();`,
-      wpilibJava: `// Lecture de l'angle (0 = Haut, 90 = Droite, 180 = Bas, 270 = Gauche, -1 = Relâché)\nint angle = controller.getPOV();`,
-      desc: "Retourne la direction sous forme d'angle en degrés. Idéal pour sélectionner des modes de presets discrets ou faire des micro-ajustements.",
+      wpilibCpp: `// Liaison Command-Based pour le bouton HAUT du D-Pad
+m_driverController.POVUp().OnTrue(
+  SetArmPositionCommand(&m_arm, ArmPosition::kHighGoal).ToPtr()
+);
+
+// Liaison pour le bouton BAS du D-Pad
+m_driverController.POVDown().OnTrue(
+  SetArmPositionCommand(&m_arm, ArmPosition::kFloorIntake).ToPtr()
+);`,
+      desc: "Retourne la direction sous forme d'angle en degrés. Utile pour sélectionner des presets discrets de bras ou réaligner le châssis face aux AprilTags (0°, 90°, 180°, 270°).",
       pos: "Bas Gauche"
     },
     backButton: {
       name: "Bouton Back (Retour)",
       type: "Bouton 7",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetBackButton();\n\n// Mode Command\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kBack)\n    .OnTrue(InstantCommand([this] { drivetrain.ZeroHeading(); }).ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getBackButton();\n\n// Mode Command\ncontroller.back().onTrue(new InstantCommand(drivetrain::zeroHeading));`,
-      desc: "Bouton central gauche. Généralement utilisé pour étalonner ou remettre à zéro le cap du gyroscope (Gyro Reset).",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Remet à zéro le cap du gyroscope (Gyro Reset / Calibration terrain)
+m_driverController.Back().OnTrue(
+  frc2::InstantCommand([this] { m_drivetrain.ZeroHeading(); }, {&m_drivetrain}).ToPtr()
+);`,
+      desc: "Bouton central gauche. Généralement réservé à la réinitialisation du cap du gyroscope (Gyro Reset / Field-oriented calibration).",
       pos: "Milieu Gauche"
     },
     startButton: {
       name: "Bouton Start",
       type: "Bouton 8",
-      wpilibCpp: `// Lecture directe\nbool state = controller.GetStartButton();\n\n// Mode Command\nfrc2::JoystickButton(&controller, frc::XboxController::Button::kStart)\n    .OnTrue(MyCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = controller.getStartButton();\n\n// Mode Command\ncontroller.start().onTrue(new MyCommand());`,
-      desc: "Bouton central droit. Pratique pour alterner entre différents profils de pilotage (ex: mode vitesse lente vs rapide).",
+      wpilibCpp: `// Configuration des bindings (dans RobotContainer.cpp)
+// Bascule entre la conduite Field-Oriented et Robot-Oriented
+m_driverController.Start().OnTrue(
+  frc2::InstantCommand([this] { m_drivetrain.ToggleFieldOriented(); }, {&m_drivetrain}).ToPtr()
+);`,
+      desc: "Bouton central droit. Pratique pour alterner entre différents profils de pilotage ou basculer l'orientation du châssis.",
       pos: "Milieu Droite"
     }
   };
 
-  // 2. Joystick Mappings
+  // 2. Joystick Mappings (C++ FRC WPILib Command-Based)
   const joystickMappings = {
     trigger: {
       name: "Gâchette Principale (Trigger)",
       type: "Bouton 1",
-      wpilibCpp: `// Lecture directe\nbool state = joystick.GetTrigger();\n\n// Mode Command\nfrc2::JoystickButton(&joystick, 1).OnTrue(ShootCommand().ToPtr());`,
-      wpilibJava: `// Lecture directe\nboolean state = joystick.getTrigger();\n\n// Mode Command\nnew JoystickButton(joystick, 1).onTrue(new MyCommand());`,
-      desc: "Gâchette située sous l'index de la poignée. Assignée aux tirs rapides et actions immédiates critiques.",
+      wpilibCpp: `// Déclaration (dans RobotContainer.h)
+#include <frc/Joystick.h>
+#include <frc2/command/button/JoystickButton.h>
+frc::Joystick m_operatorStick{1}; // Port USB 1
+
+// Binding (dans RobotContainer.cpp)
+frc2::JoystickButton(&m_operatorStick, 1).OnTrue(
+  ShootCommand(&m_shooter).ToPtr()
+);`,
+      desc: "Gâchette située sous l'index de la poignée. Assignée au lancement immédiat du tir en match.",
       pos: "Index"
     },
     thumb: {
       name: "Bouton de Pouce Latéral",
       type: "Bouton 2",
-      wpilibCpp: `// Lecture directe (Note: GetTop() est disponible pour le bouton de pouce)\nbool state = joystick.GetRawButton(2);`,
-      wpilibJava: `// Lecture directe\nboolean state = joystick.getRawButton(2);`,
-      desc: "Bouton situé sur le côté de la tête du manche. Facile d'accès sous le pouce. Pratique pour activer ou désactiver les moteurs d'indexation.",
+      wpilibCpp: `// Binding (dans RobotContainer.cpp)
+// Active l'aspiration tant que pressé
+frc2::JoystickButton(&m_operatorStick, 2).WhileTrue(
+  IntakeCommand(&m_intake).ToPtr()
+);`,
+      desc: "Bouton situé sur le côté de la tête du manche. Facile d'accès sous le pouce.",
       pos: "Sommet (Pouce)"
     },
     stickX: {
       name: "Axe X (Gauche / Droite)",
       type: "Axe 0",
-      wpilibCpp: `// Lecture (Droite positif, Gauche négatif)\ndouble value = joystick.GetX();`,
-      wpilibJava: `// Lecture (Droite positif, Gauche négatif)\ndouble value = joystick.getX();`,
-      desc: "Axe horizontal du manche. Utilisé pour les translations latérales en mode Swerve ou la rotation en Arcade Drive.",
+      wpilibCpp: `// Lecture (dans DefaultDriveCommand.cpp)
+double strafe = m_operatorStick.GetX();`,
+      desc: "Axe horizontal du manche. Utilisé pour les translations latérales en Swerve ou la rotation.",
       pos: "Déplacement Manche"
     },
     stickY: {
       name: "Axe Y (Avant / Arrière)",
       type: "Axe 1",
-      wpilibCpp: `// Lecture (Arrière positif, Avant négatif - Inverser pour la marche avant)\ndouble value = -joystick.GetY();`,
-      wpilibJava: `// Lecture (Arrière positif, Avant négatif - Inverser pour la marche avant)\ndouble value = -joystick.getY();`,
-      desc: "Axe vertical du manche. Par convention WPILib, l'avant renvoie une valeur négative. Pensez à inverser la valeur.",
+      wpilibCpp: `// Lecture (Inverser pour la marche avant : l'avant donne du négatif)
+double throttleSpeed = -m_operatorStick.GetY();`,
+      desc: "Axe vertical du manche. Par convention WPILib, l'avant renvoie une valeur négative.",
       pos: "Inclinaison Manche"
     },
     stickZ: {
       name: "Axe Z (Torsion / Twist)",
       type: "Axe 2",
-      wpilibCpp: `// Lecture (Torsion horaire positif)\ndouble value = joystick.GetTwist();`,
-      wpilibJava: `// Lecture (Torsion horaire positif)\ndouble value = joystick.getTwist();`,
-      desc: "Obtenu en faisant pivoter le manche sur son propre axe vertical. Idéal pour commander directement l'orientation angulaire en Swerve Drive.",
+      wpilibCpp: `// Lecture (Torsion horaire positif)
+double twistValue = m_operatorStick.GetTwist();`,
+      desc: "Obtenu en faisant pivoter le manche sur son propre axe vertical. Idéal pour faire pivoter le robot en Swerve Drive.",
       pos: "Torsion Manche"
     },
     throttle: {
       name: "Molette des gaz (Throttle)",
       type: "Axe 3",
-      wpilibCpp: `// Lecture (Varie de -1.0 [Max avant] à 1.0 [Max arrière])\ndouble value = joystick.GetThrottle();\n\n// Normaliser de 0.0 à 1.0 si nécessaire :\ndouble speedFactor = (1.0 - value) / 2.0;`,
-      wpilibJava: `// Lecture (Varie de -1.0 [Max avant] à 1.0 [Max arrière])\ndouble value = joystick.getThrottle();\n\n// Normaliser de 0.0 à 1.0 si nécessaire :\ndouble speedFactor = (1.0 - value) / 2.0;`,
+      wpilibCpp: `// Lecture (Varie de -1.0 [Max avant] à 1.0 [Max arrière])
+double rawThrottle = m_operatorStick.GetThrottle();
+
+// Normaliser de 0.0 (vitesse min) à 1.0 (vitesse max) :
+double speedFactor = (1.0 - rawThrottle) / 2.0;`,
       desc: "Axe curseur glissant situé à la base. Très utile pour brider ou configurer à la volée la vitesse maximale admissible du robot.",
       pos: "Curseur Base"
     },
     hatSwitch: {
       name: "Chapeau Chinois (POV / Hat Switch)",
       type: "Angles POV",
-      wpilibCpp: `// Lecture de l'angle (-1 [Relâché], 0 [Haut], 90 [Droite]...)\nint angle = joystick.GetPOV();`,
-      wpilibJava: `// Lecture de l'angle (-1 [Relâché], 0 [Haut], 90 [Droite]...)\nint angle = joystick.getPOV();`,
+      wpilibCpp: `// Lecture de l'angle (0 = Haut, 90 = Droite, 180 = Bas, 270 = Gauche, -1 = Relâché)
+int angle = m_operatorStick.GetPOV();
+
+// Liaison conditionnelle dans la boucle périodique :
+if (angle == 0) {
+  m_arm.SetSetpoint(ArmPosition::kUpperScore);
+}`,
       desc: "Mini joystick directionnel situé au sommet. Permet d'ajuster finement la visée caméra ou d'alterner les angles de tourelle.",
       pos: "Sommet"
     },
     btn3: {
       name: "Bouton Tête Gauche (Bouton 3)",
       type: "Bouton 3",
-      wpilibCpp: `bool state = joystick.GetRawButton(3);`,
-      wpilibJava: `boolean state = joystick.getRawButton(3);`,
+      wpilibCpp: `// Déclenche un alignement intelligent à gauche
+frc2::JoystickButton(&m_operatorStick, 3).OnTrue(
+  AlignLeftCommand(&m_vision).ToPtr()
+);`,
       desc: "Bouton supérieur situé sur la partie gauche de la tête du manche.",
       pos: "Sommet Gauche"
     },
     btn4: {
       name: "Bouton Tête Droite (Bouton 4)",
       type: "Bouton 4",
-      wpilibCpp: `bool state = joystick.GetRawButton(4);`,
-      wpilibJava: `boolean state = joystick.getRawButton(4);`,
+      wpilibCpp: `// Déclenche un alignement intelligent à droite
+frc2::JoystickButton(&m_operatorStick, 4).OnTrue(
+  AlignRightCommand(&m_vision).ToPtr()
+);`,
       desc: "Bouton supérieur situé sur la partie droite de la tête du manche.",
       pos: "Sommet Droite"
     },
     btn5: {
       name: "Bouton Tête Bas Gauche (Bouton 5)",
       type: "Bouton 5",
-      wpilibCpp: `bool state = joystick.GetRawButton(5);`,
-      wpilibJava: `boolean state = joystick.getRawButton(5);`,
+      wpilibCpp: `// Ramène le bras à la position d'aspiration au sol
+frc2::JoystickButton(&m_operatorStick, 5).OnTrue(
+  SetArmPositionCommand(&m_arm, ArmPosition::kFloor).ToPtr()
+);`,
       desc: "Bouton inférieur situé sur la partie gauche de la tête du manche.",
       pos: "Sommet Bas-Gauche"
     },
     btn6: {
       name: "Bouton Tête Bas Droite (Bouton 6)",
       type: "Bouton 6",
-      wpilibCpp: `bool state = joystick.GetRawButton(6);`,
-      wpilibJava: `boolean state = joystick.getRawButton(6);`,
+      wpilibCpp: `// Ramène le bras à la position de stockage sécurisée (Stow)
+frc2::JoystickButton(&m_operatorStick, 6).OnTrue(
+  SetArmPositionCommand(&m_arm, ArmPosition::kStow).ToPtr()
+);`,
       desc: "Bouton inférieur situé sur la partie droite de la tête du manche.",
       pos: "Sommet Bas-Droite"
     },
     baseButtons: {
       name: "Boutons de Base (7 à 12)",
       type: "Boutons 7 - 12",
-      wpilibCpp: `// Exemple pour le Bouton 7\nbool btn7 = joystick.GetRawButton(7);\n\n// Exemple pour le Bouton 8\nbool btn8 = joystick.GetRawButton(8);`,
-      wpilibJava: `// Exemple pour le Bouton 7\nboolean btn7 = joystick.getRawButton(7);\n\n// Exemple pour le Bouton 8\nboolean btn8 = joystick.getRawButton(8);`,
-      desc: "Boutons poussoirs regroupés sur le socle gauche de la base. Très utilisés pour déclencher l'alignement semi-automatique par vision (AprilTags) ou configurer l'autonomie.",
+      wpilibCpp: `// Liaison pour le bouton 7 de la base
+frc2::JoystickButton(&m_operatorStick, 7).OnTrue(
+  TestSubsystemCommand(&m_tester).ToPtr()
+);
+
+// Liaison pour le bouton 8 de la base
+frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
+  CalibrateSensorsCommand(&m_sensors).ToPtr()
+);`,
+      desc: "Boutons poussoirs regroupés sur le socle gauche de la base. Idéal pour déclencher des séquences de test ou réétalonner des capteurs.",
       pos: "Base"
     }
   };
@@ -229,7 +312,7 @@ export default function ProgrammingPage() {
   // Documentation references from WPILib headers
   const xboxDocMethods = [
     { name: "double GetLeftX()", desc: "Lecture de la valeur X du stick analogique gauche. Droite positif." },
-    { name: "double GetLeftY()", desc: "Lecture de la valeur Y du stick analogique gauche. Arrière positif (inversé par rapport aux standards habituels)." },
+    { name: "double GetLeftY()", desc: "Lecture de la valeur Y du stick analogique gauche. Arrière positif." },
     { name: "double GetRightX()", desc: "Lecture de la valeur X du stick analogique droit. Droite positif." },
     { name: "double GetRightY()", desc: "Lecture de la valeur Y du stick analogique droit. Arrière positif." },
     { name: "double GetLeftTriggerAxis()", desc: "Lecture de l'axe analogique de la gâchette gauche, retournant une valeur de 0.0 à 1.0." },
@@ -273,31 +356,68 @@ export default function ProgrammingPage() {
       id: 'basic',
       name: 'Schéma de Base FRC',
       url: '/images/frc_control_system_basic.svg',
-      desc: 'Topologie de câblage de base officielle. Indispensable pour câbler le RoboRIO, le PDP, le disjoncteur principal de 120A, la batterie et les moteurs standard.'
+      desc: 'Topologie de câblage de base officielle. Indispensable pour raccorder les composants principaux de propulsion et l\'alimentation électrique générale.',
+      components: [
+        { name: "RoboRIO 1.0 / 2.0 (Cerveau)", desc: "Gère les signaux d'entrées/sorties (PWM, CAN, DIO, Analogiques) et l'interfaçage réseau WiFi." },
+        { name: "Power Distribution Panel (PDP)", desc: "Boîtier de répartition du courant 12V vers les variateurs à l'aide de disjoncteurs thermiques de 10A à 40A." },
+        { name: "Disjoncteur Principal 120A", desc: "Interrupteur coupe-circuit réarmable protégeant le robot contre les courts-circuits généraux." },
+        { name: "Batterie FRC 12V 18Ah", desc: "Unique source d'énergie autorisée sur le robot, fournissant de forts appels de courant (jusqu'à plus de 300A)." },
+        { name: "Talon SRX / Victor SPX", desc: "Variateurs de vitesse contrôlant les moteurs par bus CAN (boucle fermée) ou signal PWM classique." },
+        { name: "Voltage Regulator Module (VRM)", desc: "Fournit du 5V et 12V ultra-régulés et protégés pour alimenter la radio sans fil et les caméras." }
+      ]
     },
     {
       id: 'rev',
       name: 'Système REV Robotics',
       url: '/images/frc_control_system_rev.svg',
-      desc: 'Configuration matérielle employant l\'écosystème REV Robotics : Power Distribution Hub (PDH), Pneumatic Hub (PH), disjoncteurs et variateurs Spark MAX.'
+      desc: 'Configuration matérielle employant l\'écosystème matériel complet de REV Robotics avec bus CAN et alimentation intelligente.',
+      components: [
+        { name: "Power Distribution Hub (PDH)", desc: "Module d'alimentation 12V doté de 40 canaux fusibles, d'un monitoring télémétrique et d'une gestion intelligente des canaux commutés." },
+        { name: "Pneumatic Hub (PH)", desc: "Contrôle les électrovannes pneumatiques en 12V/24V et régule le compresseur grâce à un capteur de pression analogique." },
+        { name: "Radio Power Module (RPM)", desc: "Remplace le VRM pour alimenter la radio robot en fournissant du 18V passif PoE filtré contre les baisses de tension (brownouts)." },
+        { name: "SPARK MAX Motor Controller", desc: "Variateur brushless intelligent relié au bus CAN, incluant le support des capteurs à effet Hall intégrés aux moteurs NEO." },
+        { name: "Moteur NEO Brushless", desc: "Moteur triphasé synchrone de propulsion à haut rendement offrant un couple constant." }
+      ]
     },
     {
       id: 'complete',
-      name: 'Schéma Complet FRC',
+      name: 'Câblage Complet FRC',
       url: '/images/frc_control_system_complete.svg',
-      desc: 'Schéma global exhaustif incluant tous les modules du système de contrôle, les modules pneumatiques et le routage complet des bus Ethernet et CAN.'
+      desc: 'Schéma de topologie complet incluant le système de contrôle de vol, la pneumatique avancée, le compresseur et le routage des bus CAN/Ethernet.',
+      components: [
+        { name: "RoboRIO 2.0 Real-time", desc: "Système embarqué durci effectuant la boucle de contrôle d'asservissement en temps réel." },
+        { name: "Compresseur pneumatique 12V", desc: "Alimente le circuit en air comprimé pour pressuriser les réservoirs jusqu'à 120 PSI maximum." },
+        { name: "Électrovannes Solénoïdes", desc: "Valves commandées électriquement par le PH/PCM pour déplacer les pistons pneumatiques (double effet)." },
+        { name: "Pressostat analogique", desc: "Mesure continuellement la pression d'air en PSI pour couper automatiquement le compresseur à 120 PSI." },
+        { name: "Batterie & Fusible 120A", desc: "Sécurisation en entrée de puissance avec connecteurs SB50 blindés contre les déconnexions intempestives." }
+      ]
     },
     {
       id: 'ctre',
       name: 'Schéma CTRE FRC',
       url: '/images/frc_control_system_ctre.png',
-      desc: 'Topologie réseau avancée de Cross The Road Electronics (CTRE), exploitant le bus CAN étendu et les moteurs Kraken X60.'
+      desc: 'Topologie réseau avancée de Cross The Road Electronics (CTRE), exploitant le bus CAN FD étendu et les moteurs Kraken X60 avec Talon FX.',
+      components: [
+        { name: "RoboRIO 2.0 (Cerveau)", desc: "Contrôleur central relié en USB au CANivore pour décharger le bus de communication standard." },
+        { name: "Radio Bi-bande VH-109", desc: "Nouvelle radio FRC WiFi 6E bi-bande pour des connexions de match ultra-rapides et immunisées contre le bruit de salle." },
+        { name: "Robot Signal Light (RSL)", desc: "Feu indicateur orange obligatoire clignotant selon l'état d'armement du robot." },
+        { name: "Kraken X60 (Talon FX intégré)", desc: "Moteur brushless de dernière génération à très haute densité de couple, intégrant son propre contrôleur Talon FX CAN FD." },
+        { name: "CANivore (USB to CAN FD)", desc: "Interface USB convertissant le bus standard en un bus CAN FD rapide (1 Mbps), isolant la boucle de contrôle principale." },
+        { name: "Spark MAX & Neo Vortex", desc: "Variateurs secondaires intégrés dans la même boucle d'alimentation électrique générale." }
+      ]
     },
     {
       id: 'real',
       name: 'Photo du Montage Réel',
       url: '/images/real_hardware_setup.jpg',
-      desc: 'Illustration physique d\'un banc d\'essai ou tableau de contrôle monté, idéal pour appréhender l\'agencement mécanique des câbles et des borniers.'
+      desc: 'Illustration physique d\'un banc d\'essai ou tableau de contrôle monté, idéal pour appréhender l\'agencement mécanique des câbles et des borniers.',
+      components: [
+        { name: "Plaque Polycarbonate texturée", desc: "Support isolant ajouré pour fixer les composants proprement et éviter les courts-circuits avec le châssis en aluminium." },
+        { name: "Switch Ethernet (Brainboxes)", desc: "Commutateur compact alimenté en 12V permettant de relier le RoboRIO, la radio VH-109 et un Orange Pi ou Limelight." },
+        { name: "Goulottes de Câblage", desc: "Canaux de protection en plastique permettant de cacher, regrouper et guider tous les fils électriques d'alimentation." },
+        { name: "Borniers de distribution de masse", desc: "Raccordement centralisé des liaisons négatives (Ground) et de bus de données pour réduire les longueurs de câbles." },
+        { name: "Kraken / Talon FX connecteurs", desc: "Câbles de bus de données blindés et connecteurs d'alimentation soudés proprement avec de la gaine thermo-rétractable." }
+      ]
     }
   ];
 
@@ -314,7 +434,7 @@ export default function ProgrammingPage() {
           <h2 style={styles.headerTitle}>STAN Robotix Programming & Mappings</h2>
         </div>
         <p style={styles.headerSubtitle}>
-          Centre interactif de documentation des APIs de contrôleurs et des schémas de câblage matériel FRC.
+          Centre de documentation interactive des APIs C++ (WPILib) et de câblage de commande pour FRC.
         </p>
       </div>
 
@@ -392,7 +512,7 @@ export default function ProgrammingPage() {
                     </defs>
 
                     {/* Câble */}
-                    <path d="M 250 50 C 250 20, 270 10, 280 -10" fill="none" stroke="#222" strokeWidth="6" />
+                    <path d="M 250 50 C 250 20, 270 10, 280 -10" fill="none" stroke="#222" strokeWidth="6" style={{ pointerEvents: 'none' }} />
 
                     {/* Triggers & Bumpers */}
                     {/* LB (Bumper Gauche) */}
@@ -433,14 +553,14 @@ export default function ProgrammingPage() {
                     />
 
                     {/* Grips Noirs (Poignées) */}
-                    <path d="M 100 150 C 50 180, 40 280, 60 310 C 80 340, 140 330, 160 250 C 170 200, 120 180, 100 150 Z" fill="url(#grip-grad)" />
-                    <path d="M 400 150 C 450 180, 460 280, 440 310 C 420 340, 360 330, 340 250 C 330 200, 380 180, 400 150 Z" fill="url(#grip-grad)" />
+                    <path d="M 100 150 C 50 180, 40 280, 60 310 C 80 340, 140 330, 160 250 C 170 200, 120 180, 100 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
+                    <path d="M 400 150 C 450 180, 460 280, 440 310 C 420 340, 360 330, 340 250 C 330 200, 380 180, 400 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
 
                     {/* Corps principal bleu */}
-                    <path id="main-body" d="M 200 80 C 250 75, 250 75, 300 80 C 350 85, 380 100, 410 130 C 440 160, 450 220, 410 280 C 380 320, 340 330, 330 250 C 320 180, 280 180, 250 180 C 220 180, 180 180, 170 250 C 160 330, 120 320, 90 280 C 50 220, 60 160, 90 130 C 120 100, 150 85, 200 80 Z" fill="url(#body-grad)" stroke="#475569" strokeWidth="2" />
+                    <path id="main-body" d="M 200 80 C 250 75, 250 75, 300 80 C 350 85, 380 100, 410 130 C 440 160, 450 220, 410 280 C 380 320, 340 330, 330 250 C 320 180, 280 180, 250 180 C 220 180, 180 180, 170 250 C 160 330, 120 320, 90 280 C 50 220, 60 160, 90 130 C 120 100, 150 85, 200 80 Z" fill="url(#body-grad)" stroke="#475569" strokeWidth="2" style={{ pointerEvents: 'none' }} />
 
                     {/* Base noire centrale */}
-                    <path d="M 170 190 C 200 160, 300 160, 330 190 C 350 210, 340 260, 310 260 C 280 260, 270 230, 250 230 C 230 230, 220 260, 190 260 C 160 260, 150 210, 170 190 Z" fill="#151e2e" />
+                    <path d="M 170 190 C 200 160, 300 160, 330 190 C 350 210, 340 260, 310 260 C 280 260, 270 230, 250 230 C 230 230, 220 260, 190 260 C 160 260, 150 210, 170 190 Z" fill="#151e2e" style={{ pointerEvents: 'none' }} />
 
                     {/* D-Pad (POV) */}
                     <g 
@@ -450,12 +570,12 @@ export default function ProgrammingPage() {
                       onMouseEnter={() => setHoveredElement('dpad')}
                       onMouseLeave={() => setHoveredElement(null)}
                     >
-                      <circle cx="0" cy="0" r="35" fill={hoveredElement === 'dpad' ? 'var(--brand-red-alpha-20)' : '#232d3d'} />
-                      <path id="dpad-up" d="M -12 -30 L 12 -30 L 12 -12 L -12 -12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} />
-                      <path id="dpad-down" d="M -12 12 L 12 12 L 12 30 L -12 30 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} />
-                      <path id="dpad-left" d="M -30 -12 L -12 -12 L -12 12 L -30 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} />
-                      <path id="dpad-right" d="M 12 -12 L 30 -12 L 30 12 L 12 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} />
-                      <rect x="-12" y="-12" width="24" height="24" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} />
+                      <circle cx="0" cy="0" r="35" fill={hoveredElement === 'dpad' ? 'var(--brand-red-alpha-20)' : '#232d3d'} style={{ pointerEvents: 'none' }} />
+                      <path id="dpad-up" d="M -12 -30 L 12 -30 L 12 -12 L -12 -12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
+                      <path id="dpad-down" d="M -12 12 L 12 12 L 12 30 L -12 30 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
+                      <path id="dpad-left" d="M -30 -12 L -12 -12 L -12 12 L -30 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
+                      <path id="dpad-right" d="M 12 -12 L 30 -12 L 30 12 L 12 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
+                      <rect x="-12" y="-12" width="24" height="24" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
                     </g>
 
                     {/* Joysticks Analogiques */}
@@ -467,7 +587,7 @@ export default function ProgrammingPage() {
                       onMouseEnter={() => setHoveredElement('leftStick')}
                       onMouseLeave={() => setHoveredElement(null)}
                     >
-                      <circle cx="0" cy="0" r="28" fill="#0a0a0a" />
+                      <circle cx="0" cy="0" r="28" fill="#0a0a0a" style={{ pointerEvents: 'none' }} />
                       <circle 
                         cx="0" 
                         cy="-2" 
@@ -475,6 +595,7 @@ export default function ProgrammingPage() {
                         fill={hoveredElement === 'leftStick' ? 'var(--brand-red-alpha-30)' : 'url(#stick-grad)'} 
                         stroke={hoveredElement === 'leftStick' ? 'var(--brand-red)' : 'none'}
                         strokeWidth={2}
+                        style={{ pointerEvents: 'none' }}
                       />
                     </g>
                     {/* Stick Droite */}
@@ -485,7 +606,7 @@ export default function ProgrammingPage() {
                       onMouseEnter={() => setHoveredElement('rightStick')}
                       onMouseLeave={() => setHoveredElement(null)}
                     >
-                      <circle cx="0" cy="0" r="28" fill="#0a0a0a" />
+                      <circle cx="0" cy="0" r="28" fill="#0a0a0a" style={{ pointerEvents: 'none' }} />
                       <circle 
                         cx="0" 
                         cy="-2" 
@@ -493,12 +614,13 @@ export default function ProgrammingPage() {
                         fill={hoveredElement === 'rightStick' ? 'var(--brand-red-alpha-30)' : 'url(#stick-grad)'} 
                         stroke={hoveredElement === 'rightStick' ? 'var(--brand-red)' : 'none'}
                         strokeWidth={2}
+                        style={{ pointerEvents: 'none' }}
                       />
                     </g>
 
                     {/* Action Buttons A, B, X, Y */}
                     <g id="action-buttons" transform="translate(365, 140)">
-                      <circle cx="0" cy="0" r="42" fill="#232d3d" />
+                      <circle cx="0" cy="0" r="42" fill="#232d3d" style={{ pointerEvents: 'none' }} />
                       {/* X (Bleu) */}
                       <g 
                         id="button-x"
@@ -506,8 +628,8 @@ export default function ProgrammingPage() {
                         onMouseEnter={() => setHoveredElement('buttonX')}
                         onMouseLeave={() => setHoveredElement(null)}
                       >
-                        <circle cx="-24" cy="0" r="11" fill={hoveredElement === 'buttonX' ? 'var(--brand-red)' : '#0033cc'} />
-                        <circle cx="-24" cy="-1" r="8" fill={hoveredElement === 'buttonX' ? '#ef4444' : '#3366ff'} />
+                        <circle cx="-24" cy="0" r="11" fill={hoveredElement === 'buttonX' ? 'var(--brand-red)' : '#0033cc'} style={{ pointerEvents: 'none' }} />
+                        <circle cx="-24" cy="-1" r="8" fill={hoveredElement === 'buttonX' ? '#ef4444' : '#3366ff'} style={{ pointerEvents: 'none' }} />
                         <text x="-27" y="3" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>X</text>
                       </g>
                       {/* Y (Jaune) */}
@@ -517,8 +639,8 @@ export default function ProgrammingPage() {
                         onMouseEnter={() => setHoveredElement('buttonY')}
                         onMouseLeave={() => setHoveredElement(null)}
                       >
-                        <circle cx="0" cy="-24" r="11" fill={hoveredElement === 'buttonY' ? 'var(--brand-red)' : '#cc9900'} />
-                        <circle cx="0" cy="-25" r="8" fill={hoveredElement === 'buttonY' ? '#ef4444' : '#ffcc00'} />
+                        <circle cx="0" cy="-24" r="11" fill={hoveredElement === 'buttonY' ? 'var(--brand-red)' : '#cc9900'} style={{ pointerEvents: 'none' }} />
+                        <circle cx="0" cy="-25" r="8" fill={hoveredElement === 'buttonY' ? '#ef4444' : '#ffcc00'} style={{ pointerEvents: 'none' }} />
                         <text x="-3" y="-21" fill="#000" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>Y</text>
                       </g>
                       {/* B (Rouge) */}
@@ -528,8 +650,8 @@ export default function ProgrammingPage() {
                         onMouseEnter={() => setHoveredElement('buttonB')}
                         onMouseLeave={() => setHoveredElement(null)}
                       >
-                        <circle cx="24" cy="0" r="11" fill={hoveredElement === 'buttonB' ? 'var(--brand-red)' : '#cc0000'} />
-                        <circle cx="24" cy="-1" r="8" fill={hoveredElement === 'buttonB' ? '#ff6666' : '#ff3333'} />
+                        <circle cx="24" cy="0" r="11" fill={hoveredElement === 'buttonB' ? 'var(--brand-red)' : '#cc0000'} style={{ pointerEvents: 'none' }} />
+                        <circle cx="24" cy="-1" r="8" fill={hoveredElement === 'buttonB' ? '#ff6666' : '#ff3333'} style={{ pointerEvents: 'none' }} />
                         <text x="21" y="3" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>B</text>
                       </g>
                       {/* A (Vert) */}
@@ -539,8 +661,8 @@ export default function ProgrammingPage() {
                         onMouseEnter={() => setHoveredElement('buttonA')}
                         onMouseLeave={() => setHoveredElement(null)}
                       >
-                        <circle cx="0" cy="24" r="11" fill={hoveredElement === 'buttonA' ? 'var(--brand-red)' : '#008000'} />
-                        <circle cx="0" cy="23" r="8" fill={hoveredElement === 'buttonA' ? '#4ade80' : '#33cc33'} />
+                        <circle cx="0" cy="24" r="11" fill={hoveredElement === 'buttonA' ? 'var(--brand-red)' : '#008000'} style={{ pointerEvents: 'none' }} />
+                        <circle cx="0" cy="23" r="8" fill={hoveredElement === 'buttonA' ? '#4ade80' : '#33cc33'} style={{ pointerEvents: 'none' }} />
                         <text x="-3" y="27" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>A</text>
                       </g>
                     </g>
@@ -560,7 +682,7 @@ export default function ProgrammingPage() {
                         onMouseEnter={() => setHoveredElement('backButton')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
-                      <text x="213" y="142" fontSize="5" fill="#94a3b8" textAnchor="middle" fontFamily="sans-serif">BACK</text>
+                      <text x="213" y="142" fontSize="5" fill="#94a3b8" textAnchor="middle" fontFamily="sans-serif" style={{ pointerEvents: 'none' }}>BACK</text>
                       
                       {/* Start */}
                       <rect 
@@ -575,13 +697,13 @@ export default function ProgrammingPage() {
                         onMouseEnter={() => setHoveredElement('startButton')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
-                      <text x="287" y="142" fontSize="5" fill="#94a3b8" textAnchor="middle" fontFamily="sans-serif">START</text>
+                      <text x="287" y="142" fontSize="5" fill="#94a3b8" textAnchor="middle" fontFamily="sans-serif" style={{ pointerEvents: 'none' }}>START</text>
                       
                       {/* Home / Mode Logo Button */}
                       <g id="btn-home" transform="translate(250, 140)">
-                        <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#475569" strokeWidth="1" />
-                        <circle cx="0" cy="0" r="10" fill="#0f172a" />
-                        <path d="M -4 -2 C -4 -4, -2 -6, 0 -6 C 2 -6, 4 -4, 4 -2 C 4 1, -4 4, -4 4 Z" fill="var(--brand-red)" />
+                        <circle cx="0" cy="0" r="14" fill="#1e293b" stroke="#475569" strokeWidth="1" style={{ pointerEvents: 'none' }} />
+                        <circle cx="0" cy="0" r="10" fill="#0f172a" style={{ pointerEvents: 'none' }} />
+                        <path d="M -4 -2 C -4 -4, -2 -6, 0 -6 C 2 -6, 4 -4, 4 -2 C 4 1, -4 4, -4 4 Z" fill="var(--brand-red)" style={{ pointerEvents: 'none' }} />
                       </g>
                     </g>
                   </svg>
@@ -606,10 +728,10 @@ export default function ProgrammingPage() {
                     </defs>
 
                     {/* Câble */}
-                    <path d="M 160 270 C 120 250, 80 260, 50 240" fill="none" stroke="#222" strokeWidth="5" />
+                    <path d="M 160 270 C 120 250, 80 260, 50 240" fill="none" stroke="#222" strokeWidth="5" style={{ pointerEvents: 'none' }} />
 
                     {/* Base Noire Feet */}
-                    <g id="black-base-legs">
+                    <g id="black-base-legs" style={{ pointerEvents: 'none' }}>
                       <path d="M 180 270 L 80 300 C 60 310, 60 340, 80 350 L 130 360 L 180 320 Z" fill="#0f172a" />
                       <path d="M 90 315 L 120 345 L 145 325 L 105 305 Z" fill="#1e293b" opacity="0.4" />
                       
@@ -621,10 +743,10 @@ export default function ProgrammingPage() {
                     </g>
 
                     {/* Chassis central argenté */}
-                    <path id="silver-chassis" d="M 250 250 C 350 250, 400 320, 360 380 C 330 420, 280 430, 250 430 C 220 430, 170 420, 140 380 C 100 320, 150 250, 250 250 Z" fill="url(#silver-base)" stroke="#475569" strokeWidth="2" />
+                    <path id="silver-chassis" d="M 250 250 C 350 250, 400 320, 360 380 C 330 420, 280 430, 250 430 C 220 430, 170 420, 140 380 C 100 320, 150 250, 250 250 Z" fill="url(#silver-base)" stroke="#475569" strokeWidth="2" style={{ pointerEvents: 'none' }} />
 
                     {/* Soufflet du manche */}
-                    <g id="stick-boot">
+                    <g id="stick-boot" style={{ pointerEvents: 'none' }}>
                       <ellipse cx="250" cy="300" rx="55" ry="25" fill="#111" />
                       <ellipse cx="250" cy="290" rx="45" ry="20" fill="#222" />
                       <ellipse cx="250" cy="280" rx="35" ry="15" fill="#111" />
@@ -637,13 +759,13 @@ export default function ProgrammingPage() {
                       onMouseEnter={() => setHoveredElement('baseButtons')}
                       onMouseLeave={() => setHoveredElement(null)}
                     >
-                      <path id="base-btn-7" d="M 160 320 L 180 325 L 175 345 L 155 340 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" />
-                      <path id="base-btn-8" d="M 185 327 L 205 330 L 200 350 L 180 347 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" />
-                      <path id="base-btn-9" d="M 210 332 L 230 332 L 225 352 L 205 352 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" />
+                      <path id="base-btn-7" d="M 160 320 L 180 325 L 175 345 L 155 340 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-8" d="M 185 327 L 205 330 L 200 350 L 180 347 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-9" d="M 210 332 L 230 332 L 225 352 L 205 352 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
                       
-                      <path id="base-btn-10" d="M 145 350 L 165 355 L 160 375 L 140 370 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" />
-                      <path id="base-btn-11" d="M 170 357 L 190 360 L 185 380 L 165 377 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" />
-                      <path id="base-btn-12" d="M 195 362 L 215 362 L 210 382 L 190 382 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" />
+                      <path id="base-btn-10" d="M 145 350 L 165 355 L 160 375 L 140 370 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-11" d="M 170 357 L 190 360 L 185 380 L 165 377 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
+                      <path id="base-btn-12" d="M 195 362 L 215 362 L 210 382 L 190 382 Z" fill={hoveredElement === 'baseButtons' ? 'var(--brand-red)' : '#1e293b'} stroke="#475569" style={{ pointerEvents: 'none' }} />
                     </g>
 
                     {/* Molette des gaz (Throttle) */}
@@ -654,9 +776,9 @@ export default function ProgrammingPage() {
                       onMouseEnter={() => setHoveredElement('throttle')}
                       onMouseLeave={() => setHoveredElement(null)}
                     >
-                      <rect x="0" y="-15" width="20" height="40" rx="5" fill={hoveredElement === 'throttle' ? 'var(--brand-red)' : '#020617'} />
-                      <path d="M 5 -10 L 15 -10 L 15 20 L 5 20 Z" fill="#475569" />
-                      <rect x="-5" y="0" width="30" height="4" fill="#020617" />
+                      <rect x="0" y="-15" width="20" height="40" rx="5" fill={hoveredElement === 'throttle' ? 'var(--brand-red)' : '#020617'} style={{ pointerEvents: 'none' }} />
+                      <path d="M 5 -10 L 15 -10 L 15 20 L 5 20 Z" fill="#475569" style={{ pointerEvents: 'none' }} />
+                      <rect x="-5" y="0" width="30" height="4" fill="#020617" style={{ pointerEvents: 'none' }} />
                     </g>
 
                     {/* Stick Column */}
@@ -670,13 +792,13 @@ export default function ProgrammingPage() {
                         fill={hoveredElement === 'stickY' || hoveredElement === 'stickX' || hoveredElement === 'stickZ' ? 'var(--brand-red-alpha-30)' : 'url(#stick-black)'} 
                         stroke={hoveredElement === 'stickY' || hoveredElement === 'stickX' || hoveredElement === 'stickZ' ? 'var(--brand-red)' : 'none'}
                         strokeWidth={2}
-                        style={{ transition: 'all 0.15s' }}
+                        style={{ transition: 'all 0.15s', pointerEvents: 'none' }}
                       />
-                      <path d="M 275 240 C 310 240, 340 250, 340 260 C 340 270, 300 275, 275 275 Z" fill="#0f172a" />
+                      <path d="M 275 240 C 310 240, 340 250, 340 260 C 340 270, 300 275, 275 275 Z" fill="#0f172a" style={{ pointerEvents: 'none' }} />
                     </g>
 
                     {/* Tête du Manche */}
-                    <path d="M 170 80 C 160 60, 170 40, 200 30 C 240 20, 280 40, 290 60 C 290 80, 270 90, 250 90 C 210 90, 180 100, 170 80 Z" fill="#1e293b" stroke="#475569" strokeWidth={1} />
+                    <path d="M 170 80 C 160 60, 170 40, 200 30 C 240 20, 280 40, 290 60 C 290 80, 270 90, 250 90 C 210 90, 180 100, 170 80 Z" fill="#1e293b" stroke="#475569" strokeWidth={1} style={{ pointerEvents: 'none' }} />
 
                     {/* Gâchette Principale (Trigger) */}
                     <path 
@@ -711,9 +833,9 @@ export default function ProgrammingPage() {
                       onMouseEnter={() => setHoveredElement('hatSwitch')}
                       onMouseLeave={() => setHoveredElement(null)}
                     >
-                      <circle cx="0" cy="0" r="16" fill={hoveredElement === 'hatSwitch' ? 'var(--brand-red)' : '#020617'} />
-                      <circle cx="0" cy="-2" r="12" fill="#475569" />
-                      <circle cx="0" cy="-4" r="8" fill="#0f172a" />
+                      <circle cx="0" cy="0" r="16" fill={hoveredElement === 'hatSwitch' ? 'var(--brand-red)' : '#020617'} style={{ pointerEvents: 'none' }} />
+                      <circle cx="0" cy="-2" r="12" fill="#475569" style={{ pointerEvents: 'none' }} />
+                      <circle cx="0" cy="-4" r="8" fill="#0f172a" style={{ pointerEvents: 'none' }} />
                     </g>
 
                     {/* Boutons supérieurs 3, 4, 5, 6 */}
@@ -756,7 +878,7 @@ export default function ProgrammingPage() {
               )}
             </div>
 
-            {/* Right Panel: Detail HUD, Code Selector & Documentation List */}
+            {/* Right Panel: Detail HUD, C++ Code Only & Documentation API */}
             <div style={styles.hudCard}>
               {hoveredElement ? (
                 <div className="glass-panel animate-fade" style={styles.hudContent}>
@@ -784,36 +906,14 @@ export default function ProgrammingPage() {
                     </span>
                   </div>
 
-                  {/* Code Selector & Box */}
+                  {/* Code Snippet Box (C++ Only) */}
                   <div style={styles.codeBlockContainer}>
                     <div style={styles.codeBlockHeader}>
-                      <span>Exemple d'utilisation</span>
-                      <div style={styles.langSelector}>
-                        <button 
-                          onClick={() => setCodeLang('cpp')}
-                          style={{
-                            ...styles.langBtn,
-                            backgroundColor: codeLang === 'cpp' ? 'var(--brand-red-alpha-20)' : 'transparent',
-                            color: codeLang === 'cpp' ? 'var(--text-main)' : 'var(--text-muted)'
-                          }}
-                        >
-                          C++
-                        </button>
-                        <button 
-                          onClick={() => setCodeLang('java')}
-                          style={{
-                            ...styles.langBtn,
-                            backgroundColor: codeLang === 'java' ? 'var(--brand-red-alpha-20)' : 'transparent',
-                            color: codeLang === 'java' ? 'var(--text-main)' : 'var(--text-muted)'
-                          }}
-                        >
-                          Java
-                        </button>
-                      </div>
+                      <span>Exemple d'utilisation (C++ FRC WPILib)</span>
                       <button 
                         onClick={() => triggerCopy(activeController === 'xbox' 
-                          ? (codeLang === 'cpp' ? xboxMappings[hoveredElement].wpilibCpp : xboxMappings[hoveredElement].wpilibJava)
-                          : (codeLang === 'cpp' ? joystickMappings[hoveredElement].wpilibCpp : joystickMappings[hoveredElement].wpilibJava)
+                          ? xboxMappings[hoveredElement].wpilibCpp 
+                          : joystickMappings[hoveredElement].wpilibCpp
                         )}
                         style={styles.copyBtn}
                         title="Copier le code"
@@ -828,8 +928,8 @@ export default function ProgrammingPage() {
                     <pre style={styles.codeBlock}>
                       <code>
                         {activeController === 'xbox' 
-                          ? (codeLang === 'cpp' ? xboxMappings[hoveredElement].wpilibCpp : xboxMappings[hoveredElement].wpilibJava)
-                          : (codeLang === 'cpp' ? joystickMappings[hoveredElement].wpilibCpp : joystickMappings[hoveredElement].wpilibJava)
+                          ? xboxMappings[hoveredElement].wpilibCpp 
+                          : joystickMappings[hoveredElement].wpilibCpp
                         }
                       </code>
                     </pre>
@@ -840,7 +940,7 @@ export default function ProgrammingPage() {
                   <Gamepad2 size={40} style={{ color: 'var(--text-light)', marginBottom: '14px' }} />
                   <h4>Survoler un composant</h4>
                   <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', maxWidth: '280px', marginTop: '4px' }}>
-                    Passez votre souris sur les zones interactives de la manette pour afficher la documentation API WPILib.
+                    Passez votre souris sur les boutons et joysticks à gauche pour afficher l'API C++ correspondante.
                   </p>
                 </div>
               )}
@@ -884,15 +984,15 @@ export default function ProgrammingPage() {
             </div>
           </div>
         ) : (
-          /* TAB 2: WIRING DIAGRAM PANEL GALLERY */
+          /* TAB 2: WIRING DIAGRAM PANEL GALLERY WITH CUSTOM COMPONENT INFOS */
           <div className="glass-panel animate-fade" style={styles.wiringWorkspace}>
             
-            {/* Wiring Selectors & Controls */}
+            {/* Wiring Gallery Selectors */}
             <div style={styles.wiringGallerySelector}>
               <div style={styles.wiringInfoTitle}>
                 <h3 style={styles.wiringTitle}>Schémas Électriques et Câblages FRC</h3>
                 <p style={styles.wiringDesc}>
-                  Sélectionnez un schéma de montage officiel ou réel pour analyser l'agencement matériel.
+                  Sélectionnez un schéma de montage officiel ou réel pour analyser l'agencement matériel et ses composants associés.
                 </p>
               </div>
               
@@ -915,7 +1015,7 @@ export default function ProgrammingPage() {
               </div>
             </div>
 
-            {/* Schematic Display area */}
+            {/* Schematic Layout & Side panel components list */}
             <div style={styles.wiringLayout}>
               <div style={styles.imageCard}>
                 <div style={styles.imageHeaderControls}>
@@ -939,36 +1039,26 @@ export default function ProgrammingPage() {
                 />
               </div>
 
-              {/* Guide / Description details side panel */}
+              {/* Dynamic Description & Custom Components list */}
               <div style={styles.wiringGuide}>
                 <div style={styles.wiringImageDetailCard}>
                   <h4 style={styles.guideTitle}>{selectedWiring.name}</h4>
                   <p style={styles.selectedWiringDesc}>{selectedWiring.desc}</p>
                 </div>
 
-                <h4 style={{ ...styles.guideTitle, marginTop: '1rem' }}>Composants clés du système FRC</h4>
+                <h4 style={{ ...styles.guideTitle, marginTop: '1rem' }}>
+                  Composants présents dans ce schéma ({selectedWiring.components.length})
+                </h4>
                 <div style={styles.guideList}>
-                  <div style={styles.guideItem}>
-                    <div style={styles.guideHeader}>
-                      <div style={styles.guideDot}></div>
-                      <span style={styles.guideName}>RoboRIO 2.0 (Cerveau)</span>
+                  {selectedWiring.components.map((comp, idx) => (
+                    <div key={idx} style={styles.guideItem}>
+                      <div style={styles.guideHeader}>
+                        <div style={styles.guideDot}></div>
+                        <span style={styles.guideName}>{comp.name}</span>
+                      </div>
+                      <p style={styles.guideDesc}>{comp.desc}</p>
                     </div>
-                    <p style={styles.guideDesc}>Exécute le code C++/Java, gère le Wi-Fi (via Radio), les ports USB des caméras, la boucle réseau CAN et les entrées/sorties analogiques.</p>
-                  </div>
-                  <div style={styles.guideItem}>
-                    <div style={styles.guideHeader}>
-                      <div style={styles.guideDot}></div>
-                      <span style={styles.guideName}>PDH / PDP (Alimentation)</span>
-                    </div>
-                    <p style={styles.guideDesc}>Distribue l'énergie de la batterie 12V vers les variateurs de vitesse et les sous-systèmes via des fusibles réarmables.</p>
-                  </div>
-                  <div style={styles.guideItem}>
-                    <div style={styles.guideHeader}>
-                      <div style={styles.guideDot}></div>
-                      <span style={styles.guideName}>Variateurs Spark MAX / Talon FX</span>
-                    </div>
-                    <p style={styles.guideDesc}>Assurent le contrôle haute performance des moteurs brushless (NEO, Kraken X60) connectés sur le bus réseau CAN.</p>
-                  </div>
+                  ))}
                 </div>
               </div>
             </div>
@@ -1148,21 +1238,6 @@ const styles = {
     fontSize: '0.75rem',
     color: 'var(--text-muted)',
     borderBottom: '1px solid var(--border-color)'
-  },
-  langSelector: {
-    display: 'flex',
-    backgroundColor: 'rgba(255,255,255,0.03)',
-    borderRadius: '4px',
-    padding: '2px'
-  },
-  langBtn: {
-    padding: '2px 8px',
-    fontSize: '0.7rem',
-    border: 'none',
-    borderRadius: '3px',
-    cursor: 'pointer',
-    fontWeight: '600',
-    transition: 'all var(--transition-fast)'
   },
   copyBtn: {
     color: 'var(--text-muted)',
