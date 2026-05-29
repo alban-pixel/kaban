@@ -7,6 +7,7 @@ import CardDetailModal from './components/CardDetailModal.jsx';
 import AdminPage from './components/AdminPage.jsx';
 import ResourcesPage from './components/ResourcesPage.jsx';
 import LearningPage from './components/LearningPage.jsx';
+import ProgrammingPage from './components/ProgrammingPage.jsx';
 
 function MainAppContent() {
   const { user, loading } = useAuth();
@@ -71,6 +72,8 @@ function MainAppContent() {
         <ResourcesPage />
       ) : activeBoardId === 'learning' ? (
         <LearningPage onSelectBoard={handleSelectBoard} />
+      ) : activeBoardId === 'programming' ? (
+        <ProgrammingPage />
       ) : (
         <KanbanBoard 
           key={`${activeBoardId}-${boardReloadKey}`} 

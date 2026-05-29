@@ -4,7 +4,7 @@ import { api } from '../utils/api.js';
 import { 
   Plus, Search, LogOut, Sun, Moon, 
   ChevronRight, ChevronDown, Folder, 
-  FolderOpen, Layout, MoreVertical, Trash, Edit2, X, Shield, Lock, BookOpen, GraduationCap
+  FolderOpen, Layout, MoreVertical, Trash, Edit2, X, Shield, Lock, BookOpen, GraduationCap, Cpu
 } from 'lucide-react';
 
 export default function Sidebar({ activeBoardId, onSelectBoard }) {
@@ -720,6 +720,21 @@ export default function Sidebar({ activeBoardId, onSelectBoard }) {
 
       {/* Sidebar Footer Controls */}
       <div style={styles.sidebarFooter}>
+        {/* Section Programmation */}
+        <button 
+          onClick={() => onSelectBoard('programming', 'Programmation')} 
+          style={{ 
+            ...styles.footerBtn, 
+            color: activeBoardId === 'programming' ? 'var(--brand-red)' : 'var(--text-sidebar-muted)',
+            backgroundColor: activeBoardId === 'programming' ? 'rgba(207, 39, 55, 0.1)' : 'transparent',
+            fontWeight: activeBoardId === 'programming' ? '600' : '500'
+          }}
+          title="Programmation & Mappage"
+        >
+          <Cpu size={18} />
+          <span>Programmation</span>
+        </button>
+
         {/* Ressources Utiles & Calculateurs */}
         <button 
           onClick={() => onSelectBoard('resources', 'Ressources')} 
