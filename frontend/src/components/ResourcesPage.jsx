@@ -254,6 +254,17 @@ export default function ResourcesPage() {
         { name: "Chief Delphi Forum", url: "https://www.chiefdelphi.com/", desc: "Le forum communautaire mondial de discussion technique et stratégique FRC." },
         { name: "ReCalc Original Web", url: "https://recalc.apetech.co/", desc: "L'outil web de référence d'analyse des mécanismes de transmission FRC." }
       ]
+    },
+    { 
+      category: "Programmation & API C++", 
+      items: [
+        { name: "Site Officiel STAN Robotix 6622", url: "https://www.stanrobotix6622.com", desc: "Le portail officiel de notre équipe, détaillant nos projets, notre histoire et nos robots." },
+        { name: "Pragmacube documentation", url: "https://pragmacube.github.io/", desc: "Portail de guides et ressources pragmatiques sur les architectures logicielles." },
+        { name: "GitHub STAN Robotix 6622", url: "https://github.com/stan-robotix-6622", desc: "Organisation GitHub officielle de l'équipe regroupant nos codes sources et projets mécatroniques." },
+        { name: "WPILib C++ Class Documentation", url: "https://github.wpilib.org/allwpilib/docs/release/cpp/index.html", desc: "La référence API C++ officielle et complète pour toutes les classes standards de la WPILib." },
+        { name: "REV Robotics C++ API Docs", url: "https://codedocs.revrobotics.com/cpp/index.html", desc: "Portail de référence C++ pour l'écosystème REV (contrôleurs Spark MAX et moteurs NEO)." },
+        { name: "CTRE Phoenix 6 C++ API Docs", url: "https://api.ctr-electronics.com/phoenix6/stable/cpp/", desc: "Documentation complète de l'API Phoenix 6 de CTR Electronics pour moteurs Kraken X60 et Falcon 500." }
+      ]
     }
   ];
 
