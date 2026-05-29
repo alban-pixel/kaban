@@ -1,0 +1,96 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 550" width="100%" height="100%">
+  <defs>
+    <linearGradient id="silver-base" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f0f0f0" />
+      <stop offset="50%" stop-color="#d0d0d0" />
+      <stop offset="100%" stop-color="#999" />
+    </linearGradient>
+    <linearGradient id="stick-black" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#333" />
+      <stop offset="50%" stop-color="#111" />
+      <stop offset="100%" stop-color="#0a0a0a" />
+    </linearGradient>
+  </defs>
+
+  <!-- Câble -->
+  <path d="M 160 270 C 120 250, 80 260, 50 240" fill="none" stroke="#222" stroke-width="5" />
+
+  <!-- Base noire (Pieds) -->
+  <g id="black-base-legs">
+    <!-- Pied gauche arrière -->
+    <path d="M 180 270 L 80 300 C 60 310, 60 340, 80 350 L 130 360 L 180 320 Z" fill="#1a1a1a" />
+    <path d="M 90 315 L 120 345 L 145 325 L 105 305 Z" fill="#f0f0f0" opacity="0.1" /> <!-- Trou visuel -->
+    
+    <!-- Pied droit arrière -->
+    <path d="M 320 270 L 420 300 C 440 310, 440 340, 420 350 L 370 360 L 320 320 Z" fill="#1a1a1a" />
+    <path d="M 410 315 L 380 345 L 355 325 L 395 305 Z" fill="#f0f0f0" opacity="0.1" />
+    
+    <!-- Pied central avant -->
+    <path d="M 200 400 L 220 480 C 230 500, 270 500, 280 480 L 300 400 Z" fill="#1a1a1a" />
+    <path d="M 230 420 L 240 470 L 260 470 L 270 420 Z" fill="#f0f0f0" opacity="0.1" />
+  </g>
+
+  <!-- Socle argenté central -->
+  <path id="silver-chassis" d="M 250 250 C 350 250, 400 320, 360 380 C 330 420, 280 430, 250 430 C 220 430, 170 420, 140 380 C 100 320, 150 250, 250 250 Z" fill="url(#silver-base)" />
+
+  <!-- Soufflet du manche (Rubber boot) -->
+  <g id="stick-boot">
+    <ellipse cx="250" cy="300" rx="55" ry="25" fill="#111" />
+    <ellipse cx="250" cy="290" rx="45" ry="20" fill="#222" />
+    <ellipse cx="250" cy="280" rx="35" ry="15" fill="#111" />
+  </g>
+
+  <!-- Boutons de la base (Côté gauche) -->
+  <g id="base-buttons" fill="#111">
+    <path id="base-btn-7" d="M 160 320 L 180 325 L 175 345 L 155 340 Z" />
+    <path id="base-btn-8" d="M 185 327 L 205 330 L 200 350 L 180 347 Z" />
+    <path id="base-btn-9" d="M 210 332 L 230 332 L 225 352 L 205 352 Z" />
+    
+    <path id="base-btn-10" d="M 145 350 L 165 355 L 160 375 L 140 370 Z" />
+    <path id="base-btn-11" d="M 170 357 L 190 360 L 185 380 L 165 377 Z" />
+    <path id="base-btn-12" d="M 195 362 L 215 362 L 210 382 L 190 382 Z" />
+  </g>
+
+  <!-- Molette des gaz (Throttle) -->
+  <g id="throttle" transform="translate(340, 350)">
+    <rect x="0" y="-15" width="20" height="40" rx="5" fill="#0a0a0a" />
+    <path d="M 5 -10 L 15 -10 L 15 20 L 5 20 Z" fill="#2a2a2a" />
+    <!-- Indicateur -->
+    <rect x="-5" y="0" width="30" height="4" fill="#111" />
+  </g>
+
+  <!-- Manche principal (Stick) -->
+  <g id="main-stick">
+    <!-- Colonne -->
+    <path d="M 220 280 C 220 180, 180 150, 180 80 C 200 60, 240 50, 270 70 C 270 140, 280 180, 280 280 Z" fill="url(#stick-black)" />
+    <!-- Repose main -->
+    <path d="M 275 240 C 310 240, 340 250, 340 260 C 340 270, 300 275, 275 275 Z" fill="#111" />
+    
+    <!-- Tête du manche -->
+    <path d="M 170 80 C 160 60, 170 40, 200 30 C 240 20, 280 40, 290 60 C 290 80, 270 90, 250 90 C 210 90, 180 100, 170 80 Z" fill="#222" />
+  </g>
+
+  <!-- Boutons de la tête du joystick -->
+  <g id="head-buttons">
+    <!-- Gâchette principale (Trigger) - Vue de profil/avant -->
+    <path id="trigger" d="M 175 85 C 160 95, 165 115, 175 120 C 180 115, 180 95, 175 85 Z" fill="#e0e0e0" />
+
+    <!-- Bouton de pouce (Thumb button) -->
+    <ellipse id="thumb-btn" cx="215" cy="110" rx="12" ry="18" fill="#e0e0e0" transform="rotate(-20 215 110)" />
+
+    <!-- Chapeau multidirectionnel (Hat switch) -->
+    <g id="hat-switch" transform="translate(220, 35)">
+      <circle cx="0" cy="0" r="16" fill="#111" />
+      <circle cx="0" cy="-2" r="12" fill="#444" />
+      <circle cx="0" cy="-4" r="8" fill="#222" />
+    </g>
+
+    <!-- Boutons supérieurs (2, 3, 4, 5) -->
+    <g id="top-buttons" fill="#d0d0d0">
+      <polygon id="btn-top-1" points="190,40 205,35 200,45 185,50" />
+      <polygon id="btn-top-2" points="180,55 195,50 190,60 175,65" />
+      <polygon id="btn-top-3" points="245,35 260,40 255,50 240,45" />
+      <polygon id="btn-top-4" points="255,50 270,55 265,65 250,60" />
+    </g>
+  </g>
+</svg>

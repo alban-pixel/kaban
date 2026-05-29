@@ -1,0 +1,108 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 500 350" width="100%" height="100%">
+  <defs>
+    <linearGradient id="body-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+      <stop offset="0%" stop-color="#3a4b6b" />
+      <stop offset="100%" stop-color="#1e2940" />
+    </linearGradient>
+    <linearGradient id="grip-grad" x1="0%" y1="0%" x2="100%" y2="0%">
+      <stop offset="0%" stop-color="#111" />
+      <stop offset="100%" stop-color="#222" />
+    </linearGradient>
+    <radialGradient id="stick-grad" cx="50%" cy="50%" r="50%">
+      <stop offset="0%" stop-color="#444" />
+      <stop offset="80%" stop-color="#111" />
+      <stop offset="100%" stop-color="#000" />
+    </radialGradient>
+  </defs>
+
+  <!-- Câble -->
+  <path d="M 250 50 C 250 20, 270 10, 280 -10" fill="none" stroke="#222" stroke-width="6" />
+
+  <!-- Gâchettes (Triggers & Bumpers) -->
+  <g id="bumpers">
+    <path id="lb" d="M 120 90 C 120 60, 180 60, 200 80 L 150 100 Z" fill="#222" />
+    <path id="rb" d="M 380 90 C 380 60, 320 60, 300 80 L 350 100 Z" fill="#222" />
+    <path id="lt" d="M 130 70 C 130 40, 170 40, 180 60 L 150 80 Z" fill="#111" />
+    <path id="rt" d="M 370 70 C 370 40, 330 40, 320 60 L 350 80 Z" fill="#111" />
+  </g>
+
+  <!-- Grips noirs (Poignées inférieures) -->
+  <path d="M 100 150 C 50 180, 40 280, 60 310 C 80 340, 140 330, 160 250 C 170 200, 120 180, 100 150 Z" fill="url(#grip-grad)" />
+  <path d="M 400 150 C 450 180, 460 280, 440 310 C 420 340, 360 330, 340 250 C 330 200, 380 180, 400 150 Z" fill="url(#grip-grad)" />
+
+  <!-- Corps principal bleu -->
+  <path id="main-body" d="M 200 80 C 250 75, 250 75, 300 80 C 350 85, 380 100, 410 130 C 440 160, 450 220, 410 280 C 380 320, 340 330, 330 250 C 320 180, 280 180, 250 180 C 220 180, 180 180, 170 250 C 160 330, 120 320, 90 280 C 50 220, 60 160, 90 130 C 120 100, 150 85, 200 80 Z" fill="url(#body-grad)" />
+
+  <!-- Base noire centrale (Zone des sticks) -->
+  <path d="M 170 190 C 200 160, 300 160, 330 190 C 350 210, 340 260, 310 260 C 280 260, 270 230, 250 230 C 230 230, 220 260, 190 260 C 160 260, 150 210, 170 190 Z" fill="#1a1a1a" />
+
+  <!-- D-Pad (Croix directionnelle) -->
+  <g id="dpad" transform="translate(140, 140)">
+    <circle cx="0" cy="0" r="35" fill="#2a2a2a" />
+    <!-- Haut, Bas, Gauche, Droite -->
+    <path id="dpad-up" d="M -12 -30 L 12 -30 L 12 -12 L -12 -12 Z" fill="#111" />
+    <path id="dpad-down" d="M -12 12 L 12 12 L 12 30 L -12 30 Z" fill="#111" />
+    <path id="dpad-left" d="M -30 -12 L -12 -12 L -12 12 L -30 12 Z" fill="#111" />
+    <path id="dpad-right" d="M 12 -12 L 30 -12 L 30 12 L 12 12 Z" fill="#111" />
+    <rect x="-12" y="-12" width="24" height="24" fill="#111" />
+  </g>
+
+  <!-- Joysticks Analogiques -->
+  <g id="left-stick" transform="translate(195, 220)">
+    <circle cx="0" cy="0" r="28" fill="#0a0a0a" />
+    <circle cx="0" cy="-2" r="22" fill="url(#stick-grad)" />
+  </g>
+  
+  <g id="right-stick" transform="translate(305, 220)">
+    <circle cx="0" cy="0" r="28" fill="#0a0a0a" />
+    <circle cx="0" cy="-2" r="22" fill="url(#stick-grad)" />
+  </g>
+
+  <!-- Boutons d'action (A, B, X, Y) -->
+  <g id="action-buttons" transform="translate(365, 140)">
+    <circle cx="0" cy="0" r="42" fill="#2a2a2a" />
+    <!-- X (Bleu) -->
+    <g id="button-x">
+      <circle cx="-24" cy="0" r="11" fill="#0033cc" />
+      <circle cx="-24" cy="-1" r="8" fill="#3366ff" />
+    </g>
+    <!-- Y (Jaune) -->
+    <g id="button-y">
+      <circle cx="0" cy="-24" r="11" fill="#cc9900" />
+      <circle cx="0" cy="-25" r="8" fill="#ffcc00" />
+    </g>
+    <!-- B (Rouge) -->
+    <g id="button-b">
+      <circle cx="24" cy="0" r="11" fill="#cc0000" />
+      <circle cx="24" cy="-1" r="8" fill="#ff3333" />
+    </g>
+    <!-- A (Vert) -->
+    <g id="button-a">
+      <circle cx="0" cy="24" r="11" fill="#008000" />
+      <circle cx="0" cy="23" r="8" fill="#33cc33" />
+    </g>
+  </g>
+
+  <!-- Boutons centraux -->
+  <g id="center-buttons">
+    <!-- Back -->
+    <rect id="btn-back" x="205" y="125" width="16" height="10" rx="5" fill="#111" />
+    <text x="213" y="142" font-size="6" fill="#aaa" text-anchor="middle" font-family="sans-serif">BACK</text>
+    
+    <!-- Start -->
+    <rect id="btn-start" x="279" y="125" width="16" height="10" rx="5" fill="#111" />
+    <text x="287" y="142" font-size="6" fill="#aaa" text-anchor="middle" font-family="sans-serif">START</text>
+    
+    <!-- Mode -->
+    <rect id="btn-mode" x="205" y="155" width="16" height="10" rx="5" fill="#111" />
+    <text x="213" y="172" font-size="6" fill="#aaa" text-anchor="middle" font-family="sans-serif">MODE</text>
+    
+    <!-- Bouton Home / Logitech -->
+    <g id="btn-home" transform="translate(250, 140)">
+      <circle cx="0" cy="0" r="14" fill="#e0e0e0" stroke="#aaa" stroke-width="1" />
+      <circle cx="0" cy="0" r="10" fill="#fff" />
+      <!-- Logo simplifié -->
+      <path d="M -4 -2 C -4 -4, -2 -6, 0 -6 C 2 -6, 4 -4, 4 -2 C 4 1, -4 4, -4 4 Z" fill="#222" />
+    </g>
+  </g>
+</svg>
