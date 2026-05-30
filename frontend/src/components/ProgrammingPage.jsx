@@ -497,12 +497,12 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                   <svg viewBox="0 0 500 350" style={styles.svg}>
                     <defs>
                       <linearGradient id="body-grad" x1="0%" y1="0%" x2="0%" y2="100%">
-                        <stop offset="0%" stopColor="#2c3a59" />
-                        <stop offset="100%" stopColor="#121824" />
+                        <stop offset="0%" stopColor="#3b4f7a" />
+                        <stop offset="100%" stopColor="#1d283f" />
                       </linearGradient>
                       <linearGradient id="grip-grad" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#0a0a0a" />
-                        <stop offset="100%" stopColor="#1e1e1e" />
+                        <stop offset="0%" stopColor="#2c3545" />
+                        <stop offset="100%" stopColor="#18202d" />
                       </linearGradient>
                       <radialGradient id="stick-grad" cx="50%" cy="50%" r="50%">
                         <stop offset="0%" stopColor="#444" />
@@ -515,8 +515,8 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                     <path d="M 250 50 C 250 20, 270 10, 280 -10" fill="none" stroke="#222" strokeWidth="6" style={{ pointerEvents: 'none' }} />
 
                     {/* Grips Noirs (Background) */}
-                    <path d="M 100 150 C 50 180, 40 280, 60 310 C 80 340, 140 330, 160 250 C 170 200, 120 180, 100 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
-                    <path d="M 400 150 C 450 180, 460 280, 440 310 C 420 340, 360 330, 340 250 C 330 200, 380 180, 400 150 Z" fill="url(#grip-grad)" style={{ pointerEvents: 'none' }} />
+                    <path d="M 100 150 C 50 180, 40 280, 60 310 C 80 340, 140 330, 160 250 C 170 200, 120 180, 100 150 Z" fill="url(#grip-grad)" stroke="#475569" strokeWidth="2" style={{ pointerEvents: 'none' }} />
+                    <path d="M 400 150 C 450 180, 460 280, 440 310 C 420 340, 360 330, 340 250 C 330 200, 380 180, 400 150 Z" fill="url(#grip-grad)" stroke="#475569" strokeWidth="2" style={{ pointerEvents: 'none' }} />
 
                     {/* Corps principal bleu (Background) */}
                     <path id="main-body" d="M 200 80 C 250 75, 250 75, 300 80 C 350 85, 380 100, 410 130 C 440 160, 450 220, 410 280 C 380 320, 340 330, 330 250 C 320 180, 280 180, 250 180 C 220 180, 180 180, 170 250 C 160 330, 120 320, 90 280 C 50 220, 60 160, 90 130 C 120 100, 150 85, 200 80 Z" fill="url(#body-grad)" stroke="#475569" strokeWidth="2" style={{ pointerEvents: 'none' }} />
@@ -537,7 +537,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       id="lb" 
                       d="M 120 90 C 120 60, 180 60, 200 80 L 150 100 Z" 
                       fill={hoveredElement === 'leftBumper' ? 'var(--brand-red)' : '#222'} 
-                      style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                      style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                       onMouseEnter={() => setHoveredElement('leftBumper')}
                       onMouseLeave={() => setHoveredElement(null)}
                     />
@@ -546,7 +546,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       id="rb" 
                       d="M 380 90 C 380 60, 320 60, 300 80 L 350 100 Z" 
                       fill={hoveredElement === 'rightBumper' ? 'var(--brand-red)' : '#222'} 
-                      style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                      style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                       onMouseEnter={() => setHoveredElement('rightBumper')}
                       onMouseLeave={() => setHoveredElement(null)}
                     />
@@ -555,7 +555,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       id="lt" 
                       d="M 130 70 C 130 40, 170 40, 180 60 L 150 80 Z" 
                       fill={hoveredElement === 'leftTrigger' ? 'var(--brand-red)' : '#111'} 
-                      style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                      style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                       onMouseEnter={() => setHoveredElement('leftTrigger')}
                       onMouseLeave={() => setHoveredElement(null)}
                     />
@@ -564,7 +564,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       id="rt" 
                       d="M 370 70 C 370 40, 330 40, 320 60 L 350 80 Z" 
                       fill={hoveredElement === 'rightTrigger' ? 'var(--brand-red)' : '#111'} 
-                      style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                      style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                       onMouseEnter={() => setHoveredElement('rightTrigger')}
                       onMouseLeave={() => setHoveredElement(null)}
                     />
@@ -580,7 +580,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       <path id="dpad-left" d="M -30 -12 L -12 -12 L -12 12 L -30 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
                       <path id="dpad-right" d="M 12 -12 L 30 -12 L 30 12 L 12 12 Z" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
                       <rect x="-12" y="-12" width="24" height="24" fill={hoveredElement === 'dpad' ? 'var(--brand-red)' : '#0f172a'} style={{ pointerEvents: 'none' }} />
-                      <circle cx="0" cy="0" r="35" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('dpad')} onMouseLeave={() => setHoveredElement(null)} />
+                      <circle cx="0" cy="0" r="35" fill="white" fillOpacity={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onMouseEnter={() => setHoveredElement('dpad')} onMouseLeave={() => setHoveredElement(null)} />
                     </g>
 
                     {/* Joysticks Analogiques */}
@@ -599,7 +599,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         strokeWidth={2}
                         style={{ pointerEvents: 'none' }}
                       />
-                      <circle cx="0" cy="0" r="28" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('leftStick')} onMouseLeave={() => setHoveredElement(null)} />
+                      <circle cx="0" cy="0" r="28" fill="white" fillOpacity={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onMouseEnter={() => setHoveredElement('leftStick')} onMouseLeave={() => setHoveredElement(null)} />
                     </g>
                     {/* Stick Droite */}
                     <g 
@@ -616,7 +616,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         strokeWidth={2}
                         style={{ pointerEvents: 'none' }}
                       />
-                      <circle cx="0" cy="0" r="28" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('rightStick')} onMouseLeave={() => setHoveredElement(null)} />
+                      <circle cx="0" cy="0" r="28" fill="white" fillOpacity={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onMouseEnter={() => setHoveredElement('rightStick')} onMouseLeave={() => setHoveredElement(null)} />
                     </g>
 
                     {/* Action Buttons A, B, X, Y */}
@@ -627,28 +627,28 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         <circle cx="-24" cy="0" r="11" fill={hoveredElement === 'buttonX' ? 'var(--brand-red)' : '#0033cc'} style={{ pointerEvents: 'none' }} />
                         <circle cx="-24" cy="-1" r="8" fill={hoveredElement === 'buttonX' ? '#ef4444' : '#3366ff'} style={{ pointerEvents: 'none' }} />
                         <text x="-27" y="3" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>X</text>
-                        <circle cx="-24" cy="0" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonX')} onMouseLeave={() => setHoveredElement(null)} />
+                        <circle cx="-24" cy="0" r="11" fill="white" fillOpacity={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onMouseEnter={() => setHoveredElement('buttonX')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                       {/* Y (Jaune) */}
                       <g id="button-y">
                         <circle cx="0" cy="-24" r="11" fill={hoveredElement === 'buttonY' ? 'var(--brand-red)' : '#cc9900'} style={{ pointerEvents: 'none' }} />
                         <circle cx="0" cy="-25" r="8" fill={hoveredElement === 'buttonY' ? '#ef4444' : '#ffcc00'} style={{ pointerEvents: 'none' }} />
                         <text x="-3" y="-21" fill="#000" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>Y</text>
-                        <circle cx="0" cy="-24" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonY')} onMouseLeave={() => setHoveredElement(null)} />
+                        <circle cx="0" cy="-24" r="11" fill="white" fillOpacity={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onMouseEnter={() => setHoveredElement('buttonY')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                       {/* B (Rouge) */}
                       <g id="button-b">
                         <circle cx="24" cy="0" r="11" fill={hoveredElement === 'buttonB' ? 'var(--brand-red)' : '#cc0000'} style={{ pointerEvents: 'none' }} />
                         <circle cx="24" cy="-1" r="8" fill={hoveredElement === 'buttonB' ? '#ff6666' : '#ff3333'} style={{ pointerEvents: 'none' }} />
                         <text x="21" y="3" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>B</text>
-                        <circle cx="24" cy="0" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonB')} onMouseLeave={() => setHoveredElement(null)} />
+                        <circle cx="24" cy="0" r="11" fill="white" fillOpacity={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onMouseEnter={() => setHoveredElement('buttonB')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                       {/* A (Vert) */}
                       <g id="button-a">
                         <circle cx="0" cy="24" r="11" fill={hoveredElement === 'buttonA' ? 'var(--brand-red)' : '#008000'} style={{ pointerEvents: 'none' }} />
                         <circle cx="0" cy="23" r="8" fill={hoveredElement === 'buttonA' ? '#4ade80' : '#33cc33'} style={{ pointerEvents: 'none' }} />
                         <text x="-3" y="27" fill="#fff" fontSize="9" fontWeight="800" style={{ pointerEvents: 'none' }}>A</text>
-                        <circle cx="0" cy="24" r="11" fill="transparent" style={{ cursor: 'pointer' }} onMouseEnter={() => setHoveredElement('buttonA')} onMouseLeave={() => setHoveredElement(null)} />
+                        <circle cx="0" cy="24" r="11" fill="white" fillOpacity={0} style={{ cursor: 'pointer', pointerEvents: 'all' }} onMouseEnter={() => setHoveredElement('buttonA')} onMouseLeave={() => setHoveredElement(null)} />
                       </g>
                     </g>
 
@@ -663,7 +663,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         height="10" 
                         rx="5" 
                         fill={hoveredElement === 'backButton' ? 'var(--brand-red)' : '#0f172a'} 
-                        style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                        style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('backButton')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -678,7 +678,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         height="10" 
                         rx="5" 
                         fill={hoveredElement === 'startButton' ? 'var(--brand-red)' : '#0f172a'} 
-                        style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                        style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('startButton')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -699,9 +699,13 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         <stop offset="100%" stopColor="#64748b" />
                       </linearGradient>
                       <linearGradient id="stick-black" x1="0%" y1="0%" x2="100%" y2="0%">
-                        <stop offset="0%" stopColor="#334155" />
-                        <stop offset="50%" stopColor="#0f172a" />
-                        <stop offset="100%" stopColor="#020617" />
+                        <stop offset="0%" stopColor="#3d4e68" />
+                        <stop offset="50%" stopColor="#1e293b" />
+                        <stop offset="100%" stopColor="#0f172a" />
+                      </linearGradient>
+                      <linearGradient id="legs-grad" x1="0%" y1="0%" x2="0%" y2="100%">
+                        <stop offset="0%" stopColor="#2c3545" />
+                        <stop offset="100%" stopColor="#18202d" />
                       </linearGradient>
                     </defs>
 
@@ -710,14 +714,14 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
 
                     {/* Base Noire Feet */}
                     <g id="black-base-legs" style={{ pointerEvents: 'none' }}>
-                      <path d="M 180 270 L 80 300 C 60 310, 60 340, 80 350 L 130 360 L 180 320 Z" fill="#0f172a" />
-                      <path d="M 90 315 L 120 345 L 145 325 L 105 305 Z" fill="#1e293b" opacity="0.4" />
+                      <path d="M 180 270 L 80 300 C 60 310, 60 340, 80 350 L 130 360 L 180 320 Z" fill="url(#legs-grad)" stroke="#475569" strokeWidth="1.5" />
+                      <path d="M 90 315 L 120 345 L 145 325 L 105 305 Z" fill="#38bdf8" opacity="0.15" />
                       
-                      <path d="M 320 270 L 420 300 C 440 310, 440 340, 420 350 L 370 360 L 320 320 Z" fill="#0f172a" />
-                      <path d="M 410 315 L 380 345 L 355 325 L 395 305 Z" fill="#1e293b" opacity="0.4" />
+                      <path d="M 320 270 L 420 300 C 440 310, 440 340, 420 350 L 370 360 L 320 320 Z" fill="url(#legs-grad)" stroke="#475569" strokeWidth="1.5" />
+                      <path d="M 410 315 L 380 345 L 355 325 L 395 305 Z" fill="#38bdf8" opacity="0.15" />
                       
-                      <path d="M 200 400 L 220 480 C 230 500, 270 500, 280 480 L 300 400 Z" fill="#0f172a" />
-                      <path d="M 230 420 L 240 470 L 260 470 L 270 420 Z" fill="#1e293b" opacity="0.4" />
+                      <path d="M 200 400 L 220 480 C 230 500, 270 500, 280 480 L 300 400 Z" fill="url(#legs-grad)" stroke="#475569" strokeWidth="1.5" />
+                      <path d="M 230 420 L 240 470 L 260 470 L 270 420 Z" fill="#38bdf8" opacity="0.15" />
                     </g>
 
                     {/* Chassis central argenté */}
@@ -738,16 +742,37 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       <path 
                         d="M 220 280 C 220 180, 180 150, 180 80 C 200 60, 240 50, 270 70 C 270 140, 280 180, 280 280 Z" 
                         fill={hoveredElement === 'stickY' || hoveredElement === 'stickX' || hoveredElement === 'stickZ' ? 'var(--brand-red-alpha-30)' : 'url(#stick-black)'} 
-                        stroke={hoveredElement === 'stickY' || hoveredElement === 'stickX' || hoveredElement === 'stickZ' ? 'var(--brand-red)' : 'none'}
+                        stroke={hoveredElement === 'stickY' || hoveredElement === 'stickX' || hoveredElement === 'stickZ' ? 'var(--brand-red)' : '#475569'}
                         strokeWidth={2}
                         style={{ transition: 'all 0.15s', pointerEvents: 'none' }}
                       />
                       <path d="M 275 240 C 310 240, 340 250, 340 260 C 340 270, 300 275, 275 275 Z" fill="#0f172a" style={{ pointerEvents: 'none' }} />
-                      {/* Transparent Hitbox */}
+                      
+                      {/* Interactive hitboxes: Split into Twist (Z), Axe X, and Axe Y */}
+                      {/* Twist (Z): Top portion */}
                       <path 
-                        d="M 220 280 C 220 180, 180 150, 180 80 C 200 60, 240 50, 270 70 C 270 140, 280 180, 280 280 Z" 
-                        fill="transparent" 
-                        style={{ cursor: 'pointer' }}
+                        d="M 180 70 L 270 70 L 275 140 L 190 140 Z" 
+                        fill="white" 
+                        fillOpacity={0} 
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                        onMouseEnter={() => setHoveredElement('stickZ')}
+                        onMouseLeave={() => setHoveredElement(null)}
+                      />
+                      {/* Axe X: Left-bottom portion */}
+                      <path 
+                        d="M 190 140 L 232 140 L 232 280 L 220 280 Z" 
+                        fill="white" 
+                        fillOpacity={0} 
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
+                        onMouseEnter={() => setHoveredElement('stickX')}
+                        onMouseLeave={() => setHoveredElement(null)}
+                      />
+                      {/* Axe Y: Right-bottom portion */}
+                      <path 
+                        d="M 232 140 L 275 140 L 280 280 L 232 280 Z" 
+                        fill="white" 
+                        fillOpacity={0} 
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('stickY')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -766,8 +791,9 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       {/* Unified transparent polygon hitbox covering all 6 buttons and gaps */}
                       <polygon 
                         points="140,350 160,320 230,332 215,382 140,370" 
-                        fill="transparent" 
-                        style={{ cursor: 'pointer' }}
+                        fill="white" 
+                        fillOpacity={0} 
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('baseButtons')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -783,8 +809,9 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         y="-15" 
                         width="30" 
                         height="40" 
-                        fill="transparent" 
-                        style={{ cursor: 'pointer' }}
+                        fill="white" 
+                        fillOpacity={0} 
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('throttle')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -796,7 +823,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       d="M 175 85 C 160 95, 165 115, 175 120 C 180 115, 180 95, 175 85 Z" 
                       fill={hoveredElement === 'trigger' ? 'var(--brand-red)' : '#f1f5f9'} 
                       stroke="#475569"
-                      style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                      style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                       onMouseEnter={() => setHoveredElement('trigger')}
                       onMouseLeave={() => setHoveredElement(null)}
                     />
@@ -810,7 +837,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                       ry="18" 
                       fill={hoveredElement === 'thumb' ? 'var(--brand-red)' : '#e2e8f0'} 
                       transform="rotate(-20 215 110)" 
-                      style={{ cursor: 'pointer', transition: 'all 0.15s' }}
+                      style={{ cursor: 'pointer', transition: 'all 0.15s', pointerEvents: 'all' }}
                       onMouseEnter={() => setHoveredElement('thumb')}
                       onMouseLeave={() => setHoveredElement(null)}
                     />
@@ -824,8 +851,9 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         cx="0" 
                         cy="0" 
                         r="16" 
-                        fill="transparent" 
-                        style={{ cursor: 'pointer' }}
+                        fill="white" 
+                        fillOpacity={0} 
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('hatSwitch')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -837,7 +865,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         id="btn-top-1" 
                         points="190,40 205,35 200,45 185,50" 
                         fill={hoveredElement === 'btn3' ? 'var(--brand-red)' : '#cbd5e1'} 
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('btn3')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -845,7 +873,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         id="btn-top-2" 
                         points="180,55 195,50 190,60 175,65" 
                         fill={hoveredElement === 'btn4' ? 'var(--brand-red)' : '#cbd5e1'} 
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('btn4')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -853,7 +881,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         id="btn-top-3" 
                         points="245,35 260,40 255,50 240,45" 
                         fill={hoveredElement === 'btn5' ? 'var(--brand-red)' : '#cbd5e1'} 
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('btn5')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
@@ -861,7 +889,7 @@ frc2::JoystickButton(&m_operatorStick, 8).OnTrue(
                         id="btn-top-4" 
                         points="255,50 270,55 265,65 250,60" 
                         fill={hoveredElement === 'btn6' ? 'var(--brand-red)' : '#cbd5e1'} 
-                        style={{ cursor: 'pointer' }}
+                        style={{ cursor: 'pointer', pointerEvents: 'all' }}
                         onMouseEnter={() => setHoveredElement('btn6')}
                         onMouseLeave={() => setHoveredElement(null)}
                       />
