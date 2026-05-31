@@ -113,5 +113,21 @@ export const api = {
   // Private Project Members API
   getProjectMembers: (projectId) => request(`/projects/${projectId}/members`),
   addProjectMember: (projectId, user_id) => request(`/projects/${projectId}/members`, { method: 'POST', body: JSON.stringify({ user_id }) }),
-  removeProjectMember: (projectId, userId) => request(`/projects/${projectId}/members/${userId}`, { method: 'DELETE' })
+  removeProjectMember: (projectId, userId) => request(`/projects/${projectId}/members/${userId}`, { method: 'DELETE' }),
+
+  // GitHub Commits News API
+  getGithubCommits: () => request('/github/commits'),
+  getRepoBranches: (owner, repo) => request(`/github/branches?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}`),
+  getRepoSubsystems: (owner, repo, branch) => request(`/github/subsystems?owner=${encodeURIComponent(owner)}&repo=${encodeURIComponent(repo)}&branch=${encodeURIComponent(branch)}`),
+
+  // Robots & CAN Bus API
+  getRobots: () => request('/robots'),
+  createRobot: (name, description, github_repo) => request('/robots', { method: 'POST', body: JSON.stringify({ name, description, github_repo }) }),
+  updateRobot: (id, name, description, github_repo) => request(`/robots/${id}`, { method: 'PUT', body: JSON.stringify({ name, description, github_repo }) }),
+  deleteRobot: (id) => request(`/robots/${id}`, { method: 'DELETE' }),
+  
+  getCanDevices: (robotId) => request(`/robots/${robotId}/can-devices`),
+  addCanDevice: (robotId, data) => request(`/robots/${robotId}/can-devices`, { method: 'POST', body: JSON.stringify(data) }),
+  updateCanDevice: (id, data) => request(`/can-devices/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
+  deleteCanDevice: (id) => request(`/can-devices/${id}`, { method: 'DELETE' })
 };

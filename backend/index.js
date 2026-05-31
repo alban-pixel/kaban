@@ -1098,6 +1098,455 @@ app.delete('/api/projects/:id/members/:userId', authenticateJWT, async (req, res
 });
 
 // ==========================================
+// GITHUB NEWS API
+// ==========================================
+
+const GITHUB_REPOS = [
+  { owner: 'stan-robotix-6622', name: '2026-StanRobotix-FRC' },
+  { owner: 'stan-robotix-6622', name: '2026-StanRobotix-OffSeason' },
+  { owner: 'stan-robotix-web', name: 'website' },
+  { owner: 'alban-pixel', name: 'kaban' }
+];
+
+let commitsCache = null;
+let lastCommitsFetchTime = 0;
+const COMMITS_CACHE_TTL = 3 * 60 * 1000; // 3 minutes cache
+
+app.get('/api/github/commits', authenticateJWT, async (req, res) => {
+  const now = Date.now();
+  if (commitsCache && (now - lastCommitsFetchTime < COMMITS_CACHE_TTL)) {
+    return res.json(commitsCache);
+  }
+
+  try {
+    const fetchPromises = GITHUB_REPOS.map(async (repo) => {
+      try {
+        const url = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits?per_page=5`;
+        const headers = {
+          'User-Agent': 'STAN-ROBOTIX-Kaban-App',
+          'Accept': 'application/vnd.github.v3+json'
+        };
+        
+        if (process.env.GITHUB_TOKEN) {
+          headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
+        }
+
+        const response = await fetch(url, { headers });
+        if (!response.ok) {
+          console.error(`Error fetching commits for ${repo.name}: ${response.statusText}`);
+          return [];
+        }
+        const commits = await response.json();
+        
+        // Fetch detailed stats and branch/pull info for each commit
+        const detailedCommits = await Promise.all(commits.map(async (c) => {
+          try {
+            const detailUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits/${c.sha}`;
+            const pullsUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits/${c.sha}/pulls`;
+            
+            const detailPromise = fetch(detailUrl, { headers });
+            const pullsPromise = fetch(pullsUrl, { headers });
+            
+            const [detailResponse, pullsResponse] = await Promise.all([detailPromise, pullsPromise]);
+
+            let branch = 'master';
+            if (pullsResponse.ok) {
+              const pulls = await pullsResponse.json();
+              if (Array.isArray(pulls) && pulls.length > 0) {
+                branch = pulls[0].head.ref;
+              }
+            }
+
+            if (!detailResponse.ok) {
+              return {
+                sha: c.sha,
+                message: c.commit.message,
+                author: {
+                  name: c.commit.author.name,
+                  date: c.commit.author.date,
+                  avatar_url: c.author ? c.author.avatar_url : null,
+                  html_url: c.author ? c.author.html_url : null
+                },
+                html_url: c.html_url,
+                repo: repo.name,
+                repo_url: `https://github.com/${repo.owner}/${repo.name}`,
+                branch,
+                stats: { total: 0, additions: 0, deletions: 0 },
+                files: []
+              };
+            }
+            const details = await detailResponse.json();
+            return {
+              sha: c.sha,
+              message: c.commit.message,
+              author: {
+                name: c.commit.author.name,
+                date: c.commit.author.date,
+                avatar_url: c.author ? c.author.avatar_url : null,
+                html_url: c.author ? c.author.html_url : null
+              },
+              html_url: c.html_url,
+              repo: repo.name,
+              repo_url: `https://github.com/${repo.owner}/${repo.name}`,
+              branch,
+              stats: details.stats || { total: 0, additions: 0, deletions: 0 },
+              files: details.files ? details.files.map(f => ({
+                filename: f.filename,
+                status: f.status,
+                additions: f.additions,
+                deletions: f.deletions,
+                changes: f.changes
+              })) : []
+            };
+          } catch (err) {
+            console.error(`Error fetching commit details for ${c.sha}:`, err);
+            return {
+              sha: c.sha,
+              message: c.commit.message,
+              author: {
+                name: c.commit.author.name,
+                date: c.commit.author.date,
+                avatar_url: c.author ? c.author.avatar_url : null,
+                html_url: c.author ? c.author.html_url : null
+              },
+              html_url: c.html_url,
+              repo: repo.name,
+              repo_url: `https://github.com/${repo.owner}/${repo.name}`,
+              branch: 'master',
+              stats: { total: 0, additions: 0, deletions: 0 },
+              files: []
+            };
+          }
+        }));
+        
+        return detailedCommits;
+      } catch (err) {
+        console.error(`Error fetching repo ${repo.name}:`, err);
+        return [];
+      }
+    });
+
+    const results = await Promise.all(fetchPromises);
+    const allCommits = results.flat();
+    
+    // Sort commits by date descending
+    allCommits.sort((a, b) => new Date(b.author.date) - new Date(a.author.date));
+    
+    // Cache the result if we got any commits
+    if (allCommits.length > 0) {
+      commitsCache = allCommits;
+      lastCommitsFetchTime = now;
+    }
+    
+    res.json(allCommits);
+  } catch (error) {
+    console.error('General error fetching GitHub commits:', error);
+    if (commitsCache) {
+      return res.json(commitsCache);
+    }
+    res.status(500).json({ error: 'Erreur lors de la récupération des actualités GitHub.' });
+  }
+});
+
+// GET /api/github/branches - Fetch branches for a specific repository
+app.get('/api/github/branches', authenticateJWT, async (req, res) => {
+  const { owner, repo } = req.query;
+  if (!owner || !repo) {
+    return res.status(400).json({ error: 'owner et repo sont requis.' });
+  }
+
+  try {
+    const url = `https://api.github.com/repos/${owner}/${repo}/branches`;
+    const headers = {
+      'User-Agent': 'STAN-ROBOTIX-Kaban-App',
+      'Accept': 'application/vnd.github.v3+json'
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
+    }
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `Impossible de récupérer les branches de ${owner}/${repo}` });
+    }
+
+    const branches = await response.json();
+    res.json(branches.map(b => ({ name: b.name })));
+  } catch (error) {
+    console.error('Error fetching github branches:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des branches GitHub.' });
+  }
+});
+
+// GET /api/github/subsystems - Fetch subsystems from a repository branch
+app.get('/api/github/subsystems', authenticateJWT, async (req, res) => {
+  const { owner, repo, branch } = req.query;
+  if (!owner || !repo) {
+    return res.status(400).json({ error: 'owner et repo sont requis.' });
+  }
+  const refBranch = branch || 'main';
+
+  try {
+    // Call the recursive tree endpoint to get all files in the repo
+    const url = `https://api.github.com/repos/${owner}/${repo}/git/trees/${refBranch}?recursive=1`;
+    const headers = {
+      'User-Agent': 'STAN-ROBOTIX-Kaban-App',
+      'Accept': 'application/vnd.github.v3+json'
+    };
+    if (process.env.GITHUB_TOKEN) {
+      headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
+    }
+
+    const response = await fetch(url, { headers });
+    if (!response.ok) {
+      return res.status(response.status).json({ error: `Impossible de charger l'arborescence du dépôt ${owner}/${repo}` });
+    }
+
+    const data = await response.json();
+    if (!data.tree || !Array.isArray(data.tree)) {
+      return res.json([]);
+    }
+
+    const subsystems = new Set();
+    
+    // We search for files:
+    // 1. Located in folders containing "/subsystems/" or "/subsystem/" or starting with "subsystems/" or "subsystem/"
+    // 2. Or files that end with "Subsystem.cpp", "Subsystem.h", "Subsystem.java"
+    for (const item of data.tree) {
+      if (item.type === 'blob') {
+        const pathLower = item.path.toLowerCase();
+        const parts = item.path.split('/');
+        const filename = parts[parts.length - 1];
+        
+        let isSubsystem = false;
+        
+        // Check if in a subsystems directory
+        if (pathLower.includes('/subsystems/') || pathLower.startsWith('subsystems/') ||
+            pathLower.includes('/subsystem/') || pathLower.startsWith('subsystem/')) {
+          isSubsystem = true;
+        } 
+        // Check if file name matches FRC Subsystem conventions
+        else if (filename.endsWith('Subsystem.cpp') || filename.endsWith('Subsystem.h') || filename.endsWith('Subsystem.java')) {
+          isSubsystem = true;
+        }
+
+        if (isSubsystem) {
+          // Extract base name without extension
+          const baseName = filename.replace(/\.(cpp|h|java|py|cs|kt)$/i, '');
+          
+          // Exclude typical files like README, main files, or empty names
+          if (baseName && 
+              !baseName.toLowerCase().startsWith('readme') && 
+              !baseName.toLowerCase().startsWith('.ds_store') &&
+              baseName !== 'subsystems' &&
+              baseName !== 'subsystem') {
+            subsystems.add(baseName);
+          }
+        }
+      }
+    }
+
+    res.json(Array.from(subsystems).sort());
+  } catch (error) {
+    console.error('Error fetching github subsystems:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des sous-systèmes GitHub.' });
+  }
+});
+
+// ==========================================
+// ROBOTS & CAN BUS CONFIGURATION API
+// ==========================================
+
+// GET /api/robots - List all robots
+app.get('/api/robots', authenticateJWT, async (req, res) => {
+  try {
+    const db = await getDatabase();
+    const robots = await db.all("SELECT * FROM robots ORDER BY name ASC");
+    res.json(robots);
+  } catch (error) {
+    console.error('Error fetching robots:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des robots.' });
+  }
+});
+
+// POST /api/robots - Create a new robot
+app.post('/api/robots', authenticateJWT, async (req, res) => {
+  const { name, description, github_repo } = req.body;
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'Le nom du robot est obligatoire.' });
+  }
+
+  try {
+    const db = await getDatabase();
+    const result = await db.run(
+      "INSERT INTO robots (name, description, github_repo) VALUES (?, ?, ?)",
+      [name.trim(), description || '', github_repo || '']
+    );
+    const newRobot = await db.get("SELECT * FROM robots WHERE id = ?", [result.lastID]);
+    res.status(201).json(newRobot);
+  } catch (error) {
+    console.error('Error creating robot:', error);
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Un robot avec ce nom existe déjà.' });
+    }
+    res.status(500).json({ error: "Erreur lors de la création du robot." });
+  }
+});
+
+// PUT /api/robots/:id - Update a robot's details
+app.put('/api/robots/:id', authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+  const { name, description, github_repo } = req.body;
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'Le nom du robot est obligatoire.' });
+  }
+
+  try {
+    const db = await getDatabase();
+    const existing = await db.get("SELECT id FROM robots WHERE id = ?", [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Robot non trouvé.' });
+    }
+
+    await db.run(
+      "UPDATE robots SET name = ?, description = ?, github_repo = ? WHERE id = ?",
+      [name.trim(), description || '', github_repo || '', id]
+    );
+    const updatedRobot = await db.get("SELECT * FROM robots WHERE id = ?", [id]);
+    res.json(updatedRobot);
+  } catch (error) {
+    console.error('Error updating robot:', error);
+    if (error.message.includes('UNIQUE constraint failed')) {
+      return res.status(400).json({ error: 'Un robot avec ce nom existe déjà.' });
+    }
+    res.status(500).json({ error: 'Erreur lors de la modification du robot.' });
+  }
+});
+
+// DELETE /api/robots/:id - Delete a robot
+app.delete('/api/robots/:id', authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const db = await getDatabase();
+    const existing = await db.get("SELECT id FROM robots WHERE id = ?", [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Robot non trouvé.' });
+    }
+
+    await db.run("DELETE FROM robots WHERE id = ?", [id]);
+    res.json({ message: 'Robot supprimé avec succès.' });
+  } catch (error) {
+    console.error('Error deleting robot:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression du robot.' });
+  }
+});
+
+// GET /api/robots/:id/can-devices - List all CAN devices of a robot
+app.get('/api/robots/:id/can-devices', authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const db = await getDatabase();
+    const devices = await db.all(
+      "SELECT * FROM can_devices WHERE robot_id = ? ORDER BY can_id ASC",
+      [id]
+    );
+    res.json(devices);
+  } catch (error) {
+    console.error('Error fetching CAN devices:', error);
+    res.status(500).json({ error: 'Erreur lors de la récupération des périphériques CAN.' });
+  }
+});
+
+// POST /api/robots/:id/can-devices - Add a CAN device
+app.post('/api/robots/:id/can-devices', authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+  const { can_id, name, device_type, bus_type, subsystem, notes, git_branch } = req.body;
+
+  if (can_id === undefined || can_id === null || isNaN(parseInt(can_id))) {
+    return res.status(400).json({ error: 'Un ID CAN valide est requis.' });
+  }
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'Le nom du périphérique est requis.' });
+  }
+  if (!device_type || device_type.trim() === '') {
+    return res.status(400).json({ error: 'Le type de périphérique est requis.' });
+  }
+
+  try {
+    const db = await getDatabase();
+    const robot = await db.get("SELECT id FROM robots WHERE id = ?", [id]);
+    if (!robot) {
+      return res.status(404).json({ error: 'Robot non trouvé.' });
+    }
+
+    const result = await db.run(
+      "INSERT INTO can_devices (robot_id, can_id, name, device_type, bus_type, subsystem, notes, git_branch) VALUES (?, ?, ?, ?, ?, ?, ?, ?)",
+      [id, parseInt(can_id), name.trim(), device_type.trim(), bus_type || 'rio', subsystem || '', notes || '', git_branch || '']
+    );
+    const newDevice = await db.get("SELECT * FROM can_devices WHERE id = ?", [result.lastID]);
+    res.status(201).json(newDevice);
+  } catch (error) {
+    console.error('Error adding CAN device:', error);
+    res.status(500).json({ error: 'Erreur lors de l\'ajout du périphérique CAN.' });
+  }
+});
+
+// PUT /api/can-devices/:id - Update a CAN device
+app.put('/api/can-devices/:id', authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+  const { can_id, name, device_type, bus_type, subsystem, notes, git_branch } = req.body;
+
+  if (can_id === undefined || can_id === null || isNaN(parseInt(can_id))) {
+    return res.status(400).json({ error: 'Un ID CAN valide est requis.' });
+  }
+  if (!name || name.trim() === '') {
+    return res.status(400).json({ error: 'Le nom du périphérique est requis.' });
+  }
+  if (!device_type || device_type.trim() === '') {
+    return res.status(400).json({ error: 'Le type de périphérique est requis.' });
+  }
+
+  try {
+    const db = await getDatabase();
+    const existing = await db.get("SELECT id FROM can_devices WHERE id = ?", [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Périphérique CAN non trouvé.' });
+    }
+
+    await db.run(
+      "UPDATE can_devices SET can_id = ?, name = ?, device_type = ?, bus_type = ?, subsystem = ?, notes = ?, git_branch = ? WHERE id = ?",
+      [parseInt(can_id), name.trim(), device_type.trim(), bus_type || 'rio', subsystem || '', notes || '', git_branch || '', id]
+    );
+    const updatedDevice = await db.get("SELECT * FROM can_devices WHERE id = ?", [id]);
+    res.json(updatedDevice);
+  } catch (error) {
+    console.error('Error updating CAN device:', error);
+    res.status(500).json({ error: 'Erreur lors de la modification du périphérique CAN.' });
+  }
+});
+
+// DELETE /api/can-devices/:id - Delete a CAN device
+app.delete('/api/can-devices/:id', authenticateJWT, async (req, res) => {
+  const { id } = req.params;
+
+  try {
+    const db = await getDatabase();
+    const existing = await db.get("SELECT id FROM can_devices WHERE id = ?", [id]);
+    if (!existing) {
+      return res.status(404).json({ error: 'Périphérique CAN non trouvé.' });
+    }
+
+    await db.run("DELETE FROM can_devices WHERE id = ?", [id]);
+    res.json({ message: 'Périphérique CAN supprimé avec succès.' });
+  } catch (error) {
+    console.error('Error deleting CAN device:', error);
+    res.status(500).json({ error: 'Erreur lors de la suppression du périphérique CAN.' });
+  }
+});
+
+// ==========================================
 // PRODUCTION FRONTEND SERVING
 // ==========================================
 
