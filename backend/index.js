@@ -1206,6 +1206,16 @@ app.get('/api/github/commits', authenticateJWT, async (req, res) => {
         // Fetch detailed stats for each of the top 5 commits
         const detailedCommits = await Promise.all(rawCommits.map(async (c) => {
           const branch = commitToBranchMap.get(c.sha) || 'master';
+          const authorName = c.commit?.author?.name || '';
+          let avatar_url = c.author ? c.author.avatar_url : null;
+          let html_url = c.author ? c.author.html_url : null;
+
+          // Fallback for floragel because of the typo in git email config
+          if (!avatar_url && authorName.toLowerCase() === 'floragel') {
+            avatar_url = 'https://avatars.githubusercontent.com/u/189805915?v=4';
+            html_url = 'https://github.com/floragel';
+          }
+
           try {
             const detailUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits/${c.sha}`;
             const detailResponse = await fetch(detailUrl, { headers });
@@ -1215,10 +1225,10 @@ app.get('/api/github/commits', authenticateJWT, async (req, res) => {
                 sha: c.sha,
                 message: c.commit.message,
                 author: {
-                  name: c.commit.author.name,
+                  name: authorName,
                   date: c.commit.author.date,
-                  avatar_url: c.author ? c.author.avatar_url : null,
-                  html_url: c.author ? c.author.html_url : null
+                  avatar_url,
+                  html_url
                 },
                 html_url: c.html_url,
                 repo: repo.name,
@@ -1233,10 +1243,10 @@ app.get('/api/github/commits', authenticateJWT, async (req, res) => {
               sha: c.sha,
               message: c.commit.message,
               author: {
-                name: c.commit.author.name,
+                name: authorName,
                 date: c.commit.author.date,
-                avatar_url: c.author ? c.author.avatar_url : null,
-                html_url: c.author ? c.author.html_url : null
+                avatar_url,
+                html_url
               },
               html_url: c.html_url,
               repo: repo.name,
@@ -1257,10 +1267,10 @@ app.get('/api/github/commits', authenticateJWT, async (req, res) => {
               sha: c.sha,
               message: c.commit.message,
               author: {
-                name: c.commit.author.name,
+                name: authorName,
                 date: c.commit.author.date,
-                avatar_url: c.author ? c.author.avatar_url : null,
-                html_url: c.author ? c.author.html_url : null
+                avatar_url,
+                html_url
               },
               html_url: c.html_url,
               repo: repo.name,
