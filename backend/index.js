@@ -1121,7 +1121,6 @@ app.get('/api/github/commits', authenticateJWT, async (req, res) => {
   try {
     const fetchPromises = GITHUB_REPOS.map(async (repo) => {
       try {
-        const url = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits?per_page=5`;
         const headers = {
           'User-Agent': 'STAN-ROBOTIX-Kaban-App',
           'Accept': 'application/vnd.github.v3+json'
@@ -1131,31 +1130,85 @@ app.get('/api/github/commits', authenticateJWT, async (req, res) => {
           headers['Authorization'] = `token ${process.env.GITHUB_TOKEN}`;
         }
 
-        const response = await fetch(url, { headers });
-        if (!response.ok) {
-          console.error(`Error fetching commits for ${repo.name}: ${response.statusText}`);
-          return [];
-        }
-        const commits = await response.json();
-        
-        // Fetch detailed stats and branch/pull info for each commit
-        const detailedCommits = await Promise.all(commits.map(async (c) => {
-          try {
-            const detailUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits/${c.sha}`;
-            const pullsUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits/${c.sha}/pulls`;
-            
-            const detailPromise = fetch(detailUrl, { headers });
-            const pullsPromise = fetch(pullsUrl, { headers });
-            
-            const [detailResponse, pullsResponse] = await Promise.all([detailPromise, pullsPromise]);
+        const isDefaultBranch = (name) => ['main', 'master', 'gh-pages'].includes(name.toLowerCase());
 
-            let branch = 'master';
-            if (pullsResponse.ok) {
-              const pulls = await pullsResponse.json();
-              if (Array.isArray(pulls) && pulls.length > 0) {
-                branch = pulls[0].head.ref;
+        let rawCommits = [];
+        let commitToBranchMap = new Map(); // SHA -> branchName
+
+        try {
+          // 1. Fetch branches for the repo
+          const branchesUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/branches`;
+          const branchesResponse = await fetch(branchesUrl, { headers });
+          
+          if (branchesResponse.ok) {
+            const branches = await branchesResponse.json();
+            
+            // 2. Fetch commits for each branch (in parallel)
+            const branchCommitsPromises = branches.map(async (branch) => {
+              try {
+                const commitsUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits?sha=${branch.name}&per_page=5`;
+                const commitsResponse = await fetch(commitsUrl, { headers });
+                if (commitsResponse.ok) {
+                  const commits = await commitsResponse.json();
+                  return { branchName: branch.name, commits };
+                }
+              } catch (e) {
+                console.error(`Error fetching commits for branch ${branch.name} of ${repo.name}:`, e);
+              }
+              return { branchName: branch.name, commits: [] };
+            });
+
+            const branchCommitsResults = await Promise.all(branchCommitsPromises);
+
+            // 3. Deduplicate commits across branches
+            const deduplicatedCommitsMap = new Map(); // SHA -> commit object
+            
+            for (const { branchName, commits } of branchCommitsResults) {
+              for (const c of commits) {
+                const existingBranch = commitToBranchMap.get(c.sha);
+                if (existingBranch) {
+                  // Prioritize feature branches over default branches for labeling
+                  if (isDefaultBranch(existingBranch) && !isDefaultBranch(branchName)) {
+                    commitToBranchMap.set(c.sha, branchName);
+                  }
+                } else {
+                  commitToBranchMap.set(c.sha, branchName);
+                  deduplicatedCommitsMap.set(c.sha, c);
+                }
               }
             }
+
+            // Convert to array and sort by commit date descending to find the top 5
+            const sortedUniqueCommits = Array.from(deduplicatedCommitsMap.values());
+            sortedUniqueCommits.sort((a, b) => new Date(b.commit.author.date) - new Date(a.commit.author.date));
+            
+            rawCommits = sortedUniqueCommits.slice(0, 5);
+          } else {
+            console.warn(`Branches API failed for ${repo.name}, falling back to default branch commits.`);
+            // Fallback: Fetch commits from default branch directly
+            const defaultCommitsUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits?per_page=5`;
+            const defaultCommitsResponse = await fetch(defaultCommitsUrl, { headers });
+            if (defaultCommitsResponse.ok) {
+              rawCommits = await defaultCommitsResponse.json();
+              for (const c of rawCommits) {
+                commitToBranchMap.set(c.sha, 'master');
+              }
+            }
+          }
+        } catch (branchError) {
+          console.error(`Error processing branches/commits for ${repo.name}:`, branchError);
+        }
+
+        if (rawCommits.length === 0) {
+          return [];
+        }
+        
+        // Fetch detailed stats for each of the top 5 commits
+        const detailedCommits = await Promise.all(rawCommits.map(async (c) => {
+          const branch = commitToBranchMap.get(c.sha) || 'master';
+          try {
+            const detailUrl = `https://api.github.com/repos/${repo.owner}/${repo.name}/commits/${c.sha}`;
+            const detailResponse = await fetch(detailUrl, { headers });
 
             if (!detailResponse.ok) {
               return {
@@ -1212,7 +1265,7 @@ app.get('/api/github/commits', authenticateJWT, async (req, res) => {
               html_url: c.html_url,
               repo: repo.name,
               repo_url: `https://github.com/${repo.owner}/${repo.name}`,
-              branch: 'master',
+              branch,
               stats: { total: 0, additions: 0, deletions: 0 },
               files: []
             };
